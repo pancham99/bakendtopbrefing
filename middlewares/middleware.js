@@ -11,7 +11,7 @@ class middleware {
 
             if (token) {
                 try {
-                    const userInfo = await jwt.verify(token, process.env.secret);
+                    const userInfo = await jwt.verify(token, process.env.JWT_SECRET);
                     req.userInfo = userInfo;
                     next();
                 } catch (error) {

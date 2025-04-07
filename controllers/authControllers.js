@@ -22,7 +22,7 @@ class authController {
                         role: user.role,
                     }
 
-                    const token = await jwt.sign(obj, process.env.secret, { expiresIn: process.env.exp_time });
+                    const token = await jwt.sign(obj, process.env.JWT_SECRET, { expiresIn: process.env.exp_time });
 
                     return res.status(200).json({ message: 'login success', token });
                 } else {

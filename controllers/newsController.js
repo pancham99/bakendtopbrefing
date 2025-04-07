@@ -13,9 +13,9 @@ class newsController {
         const { id, category, name } = req.userInfo
         const form = formidable({})
         cloudinary.config({
-            cloud_name: process.env.cloud_name,
+            CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
             api_key: process.env.api_key,
-            api_secret: process.env.api_secret,
+            api_JWT_SECRET: process.env.api_JWT_SECRET,
             secure: true
         })
 
@@ -48,9 +48,9 @@ class newsController {
         const { news_id } = req.params
         const form = formidable({})
         cloudinary.config({
-            cloud_name: process.env.cloud_name,
+            CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
             api_key: process.env.api_key,
-            api_secret: process.env.api_secret,
+            api_JWT_SECRET: process.env.api_JWT_SECRET,
             secure: true
         })
 
@@ -115,9 +115,9 @@ class newsController {
         const { id } = req.userInfo
 
         cloudinary.config({
-            cloud_name: process.env.cloud_name,
+            CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
             api_key: process.env.api_key,
-            api_secret: process.env.api_secret,
+            api_JWT_SECRET: process.env.api_JWT_SECRET,
             secure: true
         })
 
