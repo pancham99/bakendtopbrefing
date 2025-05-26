@@ -5,6 +5,7 @@ const dotenv = require('dotenv')
 const body_parser = require('body-parser')
 const cors = require('cors')
 const db_connect = require('./utils/db')
+const serverless = require('serverless-http');
 
 dotenv.config()
 
@@ -36,3 +37,4 @@ const port = process.env.port
 db_connect()
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+module.exports.handler = serverless(app);

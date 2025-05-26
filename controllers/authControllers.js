@@ -14,7 +14,7 @@ class authController {
 
         try {
             const user = await authModel.findOne({ email }).select('+password');
-            const match = await bcrypt.compare(password, user.password);
+            const match = await bcryptjs.compare(password, user.password);
             if (user) {
                 if (match) {
                     const obj = {
@@ -63,7 +63,7 @@ class authController {
                 const new_writer = await authModel.create({
                     name: name.trim(),
                     email: email.trim(),
-                    password: await bcrypt.hash(password.trim(), 10),
+                    password: await bcryptjs.hash(password.trim(), 10),
                     category: category.trim(),
                     role: 'writer'
                 })
