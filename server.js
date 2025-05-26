@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const morgan = require('morgan')
+// const morgan = require('morgan')
 const dotenv = require('dotenv')
 const body_parser = require('body-parser')
 const cors = require('cors')
@@ -11,7 +11,7 @@ dotenv.config()
 
 
 app.use(body_parser.json())
-app.use(morgan())
+// app.use(morgan())
 
 if(process.env.mode === 'production') {
   app.use(cors())
