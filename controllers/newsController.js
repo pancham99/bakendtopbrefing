@@ -11,17 +11,20 @@ const moment = require('moment');
 class newsController {
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo
+        console.log(req.userInfo, 'userInfo')
         const form = formidable({})
         cloudinary.config({
-            CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
-            api_key: process.env.api_key,
-            api_JWT_SECRET: process.env.api_JWT_SECRET,
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
             secure: true
         })
 
         try {
             const [fields, files] = await form.parse(req)
+
             const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
+            console.log(url, 'fields and files url')
             const { title, description } = fields
             const news = await newsModel.create({
                 writerId: id,
@@ -48,9 +51,9 @@ class newsController {
         const { news_id } = req.params
         const form = formidable({})
         cloudinary.config({
-            CLOUDINARY_NAME: process.env.CLOUDINARY_NAME,
-            api_key: process.env.api_key,
-            api_JWT_SECRET: process.env.api_JWT_SECRET,
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
             secure: true
         })
 
@@ -210,11 +213,11 @@ class newsController {
                 }
             ])
 
-            const news ={}
-            for(let i = 0; i<category_news.length; i++){
+            const news = {}
+            for (let i = 0; i < category_news.length; i++) {
                 news[category_news[i].category] = category_news[i].news
             }
-            return res.status(200).json({news})
+            return res.status(200).json({ news })
         } catch (error) {
             console.log(error.message)
             return res.status(500).json({ message: 'internal server error' })
@@ -232,15 +235,15 @@ class newsController {
                         slug: { $ne: slug }
                     },
                     {
-                       category: {
+                        category: {
                             $eq: news.category
-                       }
+                        }
                     }
                 ]
             }).limit(5).sort({ createdAt: -1 })
 
             return res.status(200).json({ news: news ? news : {}, relatedNews })
-            
+
         } catch (error) {
             console.log(error.message)
             return res.status(500).json({ message: 'internal server error' })
@@ -272,36 +275,36 @@ class newsController {
     }
 
     get_category_by_name = async (req, res) => {
-        const {  category } = req.params;
-    
+        const { category } = req.params;
+
         try {
             const news = await newsModel.findOneAndUpdate({ category }, { $inc: { count: 1 } }, { new: true })
-    
+
             const relatedNews = await newsModel.find({
                 $and: [
                     {
                         category: { $ne: category }
                     },
                     {
-                       category: {
+                        category: {
                             $eq: news.category
-                       }
+                        }
                     }
                 ]
             }).limit(5).sort({ createdAt: -1 })
-    
+
             return res.status(200).json({ news: news ? news : {}, relatedNews })
         } catch (error) {
             console.log(error.message)
             return res.status(500).json({ message: 'internal server error' })
         }
     };
-    
+
 
 
     get_popular_news = async (req, res) => {
         try {
-            const popularNews = await newsModel.find({status:'active'}).sort({ count: -1 }).limit(4)
+            const popularNews = await newsModel.find({ status: 'active' }).sort({ count: -1 }).limit(4)
             return res.status(200).json({ popularNews })
         } catch (error) {
             console.log(error.message)
@@ -311,7 +314,7 @@ class newsController {
 
     get_latest_news = async (req, res) => {
         try {
-            const latestNews = await newsModel.find({status:'active'}).sort({ createdAt: -1 }).limit(6)
+            const latestNews = await newsModel.find({ status: 'active' }).sort({ createdAt: -1 }).limit(6)
             return res.status(200).json({ latestNews })
         } catch (error) {
             console.log(error.message)
