@@ -23,10 +23,10 @@ if(process.env.mode === 'production') {
 
 
 
-// app.use(cors({
-//     origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "OPTIONS /api/images HTTP/1.1"],
+app.use(cors({
+    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "https://bakendtopbrefing.vercel.app", "OPTIONS /api/images HTTP/1.1"],
    
-//   }))
+  }))
 app.use('/', require('./routes/authRouters'))
 app.use('/', require('./routes/newsRoute'))
 app.get('/', (req, res) => res.send('Hello World!'))
