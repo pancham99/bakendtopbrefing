@@ -35,6 +35,7 @@ app.get('/', (req, res) => res.send('Hello World!'))
 const port = process.env.port
 
 db_connect()
+module.exports = app;
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+// app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 // module.exports.handler = serverless(app);
