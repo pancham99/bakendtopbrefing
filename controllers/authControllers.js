@@ -2,8 +2,6 @@ const authModel = require('../models/authModel');
 // const bcrypt = require('bcrypt');
 
 const bcryptjs = require('bcryptjs');
-
-
 const jwt = require('jsonwebtoken');
 
 class authController {
