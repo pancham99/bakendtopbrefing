@@ -8,6 +8,7 @@ router.post('/api/news/writer/add', middleware.auth, middleware.role, authContro
 router.get('/api/news/writers', middleware.auth, middleware.role,  authController.get_writers)
 router.put('/api/news/update_avatar', middleware.auth, authController.update_avatar)
 router.get('/api/news/get_user', middleware.auth, authController.get_user)
+router.put('/api/news/writer_status-update/:user_id', middleware.auth, authController.update_user_status)
 
 
 

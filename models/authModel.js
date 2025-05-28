@@ -22,6 +22,10 @@ const authSchema = new Schema({
         type: String,
         default: ""
     },
+    status: {
+        type: String,
+        default: 'active'
+    },
     category: {
         type: String,
         required: true

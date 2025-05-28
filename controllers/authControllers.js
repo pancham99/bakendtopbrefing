@@ -49,7 +49,7 @@ class authController {
     }
 
     add_writer = async (req, res) => {
-        const { name, email, password, category } = req.body;
+        const { name, email, password, category, status, } = req.body;
 
         if (!name || !email || !password || !category) {
             return res.status(404).json({ message: 'please enter all fields' });
@@ -70,7 +70,8 @@ class authController {
                     email: email.trim(),
                     password: await bcryptjs.hash(password.trim(), 10),
                     category: category.trim(),
-                    role: 'writer'
+                    role: 'writer',
+                    status: status?.trim() || 'active'
                 })
                 return res.status(201).json({ message: 'writer add success', witer: new_writer });
             }
@@ -154,6 +155,31 @@ class authController {
             return res.status(200).json({ user });
         } catch (error) {
             console.error("Error in get_user:", error);
+            return res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
+    }
+
+    update_user_status = async (req, res) => {
+        const { role } = req.userInfo
+        const { user_id } = req.params;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(404).json({ message: 'Please enter status' });
+        }
+
+        try {
+
+            if (role !== 'admin') {
+                return res.status(403).json({ message: 'You do not have permission to update user status' });
+            }
+            const user = await authModel.findByIdAndUpdate(user_id, { status }, { new: true });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            return res.status(200).json({ message: 'Status updated successfully', user });
+        } catch (error) {
+            console.error("Error in update_user_status:", error);
             return res.status(500).json({ message: 'Internal server error', error: error.message });
         }
     }
