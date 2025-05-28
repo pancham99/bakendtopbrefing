@@ -25,7 +25,8 @@ app.use(cors({
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://bakendtopbrefing.vercel.app"
+    "https://bakendtopbrefing.vercel.app",
+    "https://topbrefing-admin.vercel.app"
   ],
 }));
 
