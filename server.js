@@ -18,23 +18,21 @@ const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────
 app.use(bodyParser.json());
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://bakendtopbrefing.vercel.app",
-    "https://topbrefing-admin.vercel.app"
-  ],
-}));
 
 // CORS setup (Allow specific origins)
+app.use(cors({
+  "origin": "*",
+  "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+  "preflightContinue": false,
+  "optionsSuccessStatus": 204
+}));
 // app.use(cors({
 //   origin: [
 //     "http://localhost:5173",
 //     "http://localhost:3000",
 //     "http://localhost:3001",
 //     "https://bakendtopbrefing.vercel.app",
-//     "https://topbrefing-admin.vercel.app"
+    
 //   ],
 // }));
 
