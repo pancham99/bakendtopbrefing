@@ -59,6 +59,7 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req)
+          
             const { title, description } = fields
             let url = fields.old_image[0]
 

@@ -1,8 +1,13 @@
 const authModel = require('../models/authModel');
 // const bcrypt = require('bcrypt');
-
+const { formidable } = require('formidable');
+const cloudinary = require('cloudinary').v2;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+const { mongo: { ObjectId } } = require('mongoose');
+
+const moment = require('moment');
 
 class authController {
     login = async (req, res) => {
@@ -53,7 +58,7 @@ class authController {
         if (email && !email.match(/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/)) {
             return res.status(400).json({ message: 'Please provide a valid email' });
         }
-        
+
 
         try {
             const writer = await authModel.findOne({ email: email.trim() });
@@ -68,20 +73,89 @@ class authController {
                     role: 'writer'
                 })
                 return res.status(201).json({ message: 'writer add success', witer: new_writer });
-             }
+            }
         } catch (error) {
             return res.status(500).json({ message: 'internal server error' });
         }
     }
 
-    get_writers = async(req, res) =>{
-        try {
-             const writers = await authModel.find({role:'writer'}).sort({createdAt:-1});
-             return res.status(200).json({writers});
-        } catch (error) {
-            return res.status(500).json({ message: 'internal server error' });
-        }
+    // get_writers = async(req, res) =>{
+    //     try {
+    //          const writers = await authModel.find({role:'writer'}).sort({createdAt:-1});
+    //          return res.status(200).json({writers});
+    //     } catch (error) {
+    //         return res.status(500).json({ message: 'internal server error' });
+    //     }
 
+    // }
+
+    get_writers = async (req, res) => {
+        try {
+            const writers = await authModel.find({ role: 'writer' }).sort({ createdAt: -1 });
+
+            if (!writers || writers.length === 0) {
+                return res.status(404).json({ message: 'No writers found' });
+            }
+
+            return res.status(200).json({ writers });
+        } catch (error) {
+            console.error("Error in get_writers:", error);
+            return res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
+    };
+
+    update_avatar = async (req, res) => {
+        const form = formidable({})
+        console.log(form, "form")
+        const { id } = req.userInfo
+
+        cloudinary.config({
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
+            secure: true
+        })
+
+
+        try {
+
+            const [fields, files] = await form.parse(req)
+
+            let url = files.image[0]
+            console.log(url, "url url")
+
+            const data = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
+            url = data.url
+
+            const user = await authModel.findByIdAndUpdate(id, {
+                image: url,
+            }, { new: true })
+
+
+
+
+
+
+            return res.status(200).json({ message: 'Avatar updated successfully', user });
+        } catch (error) {
+            console.error("Error in update_avatar:", error);
+            return res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
+    }
+
+    get_user = async (req, res) => {
+        const { id } = req.userInfo;
+
+        try {
+            const user = await authModel.findById(id).select('-password');
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            return res.status(200).json({ user });
+        } catch (error) {
+            console.error("Error in get_user:", error);
+            return res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
     }
 
 }
