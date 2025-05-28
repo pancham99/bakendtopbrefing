@@ -20,14 +20,37 @@ const PORT = process.env.PORT || 5000;
 app.use(bodyParser.json());
 
 // CORS setup (Allow specific origins)
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://bakendtopbrefing.vercel.app"
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://bakendtopbrefing.vercel.app",
+      "https://topbrefing-admin.vercel.app",
+    ];
+
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // ✅ if using cookies or auth headers
 }));
+
+
+// app.use(cors({
+//   origin: [
+//     "http://localhost:5173",
+//     "http://localhost:3000",
+//     "http://localhost:3001",
+//     "https://bakendtopbrefing.vercel.app",
+//     "https://topbrefing-admin.vercel.app",
+//   ],
+// }));
 
 // Optional logging
 app.use(morgan('dev'));
