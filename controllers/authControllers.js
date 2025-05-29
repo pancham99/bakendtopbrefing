@@ -18,7 +18,10 @@ class authController {
         }
 
         try {
-            const user = await authModel.findOne({ email }).select('+password');
+            const user = await authModel.findOne({ email }).select('+password +status');
+            if (user.status !== 'active') {
+                return res.status(403).json({ message: 'User account is not active' });
+            }
             const match = await bcryptjs.compare(password, user.password);
             if (user) {
                 if (match) {
@@ -183,6 +186,50 @@ class authController {
             return res.status(500).json({ message: 'Internal server error', error: error.message });
         }
     }
+
+    reset_password = async (req, res) => {
+        const { id } = req.userInfo;
+        const { email, old_password, new_password } = req.body;
+        
+
+        if (!email || !old_password || !new_password) {
+            return res.status(400).json({ message: 'Please enter all fields' });
+        }
+
+        try {
+            // Find the user by email and select password field
+            const user = await authModel.findOne({ email }).select('+password');
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            // Ensure the request is made by the logged-in user
+            if (String(user._id) !== String(id)) {
+                return res.status(403).json({ message: 'Unauthorized request' });
+            }
+
+            // Check if the old password matches
+            const match = await bcryptjs.compare(old_password, user.password);
+            if (!match) {
+                return res.status(400).json({ message: 'Old password is incorrect' });
+            }
+
+            // Hash the new password
+            const hashPassword = await bcryptjs.hash(new_password, 10);
+
+            // Update the password
+            await authModel.findByIdAndUpdate(user._id, {
+                password: hashPassword
+            });
+
+            return res.status(200).json({ message: 'Password reset successfully' });
+        } catch (error) {
+            console.error("Error in reset_password:", error);
+            return res.status(500).json({ message: 'Internal server error', error: error.message });
+        }
+    }
+
+
 
 }
 module.exports = new authController();
