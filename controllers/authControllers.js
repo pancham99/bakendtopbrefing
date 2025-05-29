@@ -34,7 +34,7 @@ class authController {
 
                     const token = await jwt.sign(obj, process.env.JWT_SECRET, { expiresIn: process.env.exp_time });
 
-                    return res.status(200).json({ message: 'login success', token });
+                    return res.status(200).json({ message: 'login success', token ,success: true, });
                 } else {
                     return res.status(404).json({ message: 'invailid password' });
                 }
