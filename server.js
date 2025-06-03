@@ -31,6 +31,7 @@ app.use(cors({
     "http://localhost:3001",
     "https://bakendtopbrefing.vercel.app",
     "https://topbrefing-admin.vercel.app",
+    "https://newsportal-seven.vercel.app/"
   ],
 }));
 
