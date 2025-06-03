@@ -6,6 +6,7 @@ router.post('/api/news/add', middleware.auth, newsController.add_news);
 router.put('/api/news/update/:news_id', middleware.auth, newsController.update_news);
 
 router.put('/api/news/status-update/:news_id', middleware.auth, newsController.update_news_status);
+router.delete('/api/news/delete/:news_id', middleware.auth, middleware.role, newsController.delete_news);
 
 router.get('/api/images', middleware.auth, newsController.get_images);
 router.post('/api/images/add', middleware.auth, newsController.add_images);

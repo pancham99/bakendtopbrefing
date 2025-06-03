@@ -100,8 +100,6 @@ class newsController {
 
     }
 
-
-
     get_images = async (req, res) => {
         const { id } = req.userInfo
 
@@ -301,8 +299,6 @@ class newsController {
         }
     };
 
-
-
     get_popular_news = async (req, res) => {
         try {
             const popularNews = await newsModel.find({ status: 'active' }).sort({ count: -1 }).limit(4)
@@ -320,6 +316,26 @@ class newsController {
         } catch (error) {
             console.log(error.message)
             return res.status(500).json({ message: 'internal server error' })
+        }
+    }
+
+    delete_news = async (req, res) => {
+        const { news_id } = req.params
+        const { role } = req.userInfo
+
+        if (role === 'admin') {
+            try {
+                const news = await newsModel.findByIdAndDelete(news_id)
+                if (!news) {
+                    return res.status(404).json({ message: 'news not found' })
+                }
+                return res.status(200).json({ message: 'news deleted successfully', status: 'success' })
+            } catch (error) {
+                console.log(error.message)
+                return res.status(500).json({ message: 'internal server error' })
+            }
+        } else {
+            return res.status(401).json({ message: 'you cannot access this api server error' })
         }
     }
 
