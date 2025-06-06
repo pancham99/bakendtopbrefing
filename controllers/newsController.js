@@ -11,7 +11,7 @@ const moment = require('moment');
 class newsController {
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo
-        console.log(req.userInfo, 'userInfo')
+        
         const form = formidable({})
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -24,13 +24,13 @@ class newsController {
             const [fields, files] = await form.parse(req)
 
             const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
-            console.log(url, 'fields and files url')
-            const { title, description } = fields
+            const { title, description, state } = fields
             const news = await newsModel.create({
                 writerId: id,
                 title: title[0].trim(),
                 slug: title[0].trim().split('').join('-'),
                 category,
+                state: state[0].trim() ,
                 description: description[0],
                 image: url,
                 date: moment().format('LL'),
@@ -338,7 +338,20 @@ class newsController {
             return res.status(401).json({ message: 'you cannot access this api server error' })
         }
     }
+    get_news_state = async (req, res) => {
+        const { state } = req.params
 
+        try {
+            const news = await newsModel.find({ state }).sort({ createdAt: -1 })
+            if (news.length === 0) {
+                return res.status(404).json({ message: 'No news found for this state' });
+            }   
+            return res.status(200).json({ news });
+        } catch (error) {
+            console.log(error.message)
+            return res.status(500).json({ message: 'internal server error' })
+        }
+    }
 }
 
 
