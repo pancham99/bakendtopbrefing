@@ -9,6 +9,7 @@ const morgan = require('morgan'); // optional
 const db_connect = require('./utils/db');
 const authRoutes = require('./routes/authRouters');
 const newsRoutes = require('./routes/newsRoute');
+const bannerRoutes = require('./routes/bannerRouters'); 
 
 
 
@@ -41,6 +42,7 @@ app.get('/', (req, res) => res.send('Hello World!'));
 
 app.use('/', authRoutes);
 app.use('/', newsRoutes);
+app.use('/', bannerRoutes);
 
 
 
