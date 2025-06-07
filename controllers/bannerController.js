@@ -8,7 +8,7 @@ const moment = require('moment');
 
 class bannerController {
     addBanner = async (req, res) => {
-        const form = formidable({ multiples: false }); // we are uploading only one image
+        const form = formidable({ multiples: false }); // we are uploading only one image and one video
 
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -28,6 +28,8 @@ class bannerController {
             const bannertype = fields.bannertype?.[0] || '';
             const device = fields.device?.[0] || '';
             const imageFile = files.image;
+            const videoFile = files.videos;
+           
 
             if (!title || !bannertype || !device) {
                 return res.status(400).json({ message: 'Please fill all required fields' });
@@ -35,14 +37,24 @@ class bannerController {
 
             try {
                 let imageUrl = '';
+                let videoUrl = '';
+
                 if (imageFile && imageFile[0]?.filepath) {
                     const uploadResult = await cloudinary.uploader.upload(imageFile[0].filepath);
                     imageUrl = uploadResult.secure_url;
                 }
 
+                if (videoFile && videoFile[0]?.filepath) {
+                    const videoResult = await cloudinary.uploader.upload(videoFile[0].filepath, {
+                        resource_type: 'video'
+                    });
+                    videoUrl = videoResult.secure_url;
+                }
+
                 const newBanner = new bannerModel({
                     title,
                     image: imageUrl,
+                    videos: videoUrl,
                     bannertype,
                     description,
                     device,
@@ -79,7 +91,7 @@ class bannerController {
         if (!ObjectId.isValid(_id)) {
             return res.status(400).json({ message: 'Invalid banner ID' });
         }
-      
+
         try {
             const updatedBanner = await bannerModel.findByIdAndUpdate(_id, { status }, { new: true });
             if (!updatedBanner) {

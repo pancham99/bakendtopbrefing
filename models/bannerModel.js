@@ -8,6 +8,10 @@ const bannerSchem = new Schema({
         type: String,
         default: ''
     },
+    videos:{
+        type: String,
+        default: ''
+    },
     bannertype: {
         type: String,
         default: ''
