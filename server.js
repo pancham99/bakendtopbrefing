@@ -25,6 +25,7 @@ app.use(bodyParser.json());
 // CORS setup (Allow specific origins)
 app.use(cors({
   origin: [
+    "https://www.topbriefing.in",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:3001",
