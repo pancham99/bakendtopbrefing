@@ -29,7 +29,7 @@ app.use(cors({
 
 
     "https://www.topbriefing.in/",
-    
+    "https://www.topbriefing.in",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:3001",
