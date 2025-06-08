@@ -28,7 +28,7 @@ class bannerController {
             const bannertype = fields.bannertype?.[0] || '';
             const device = fields.device?.[0] || '';
             const imageFile = files.image;
-            const videoFile = files.videos;
+            // const videoFile = files.videos;
            
 
             if (!title || !bannertype || !device) {
@@ -44,17 +44,17 @@ class bannerController {
                     imageUrl = uploadResult.secure_url;
                 }
 
-                if (videoFile && videoFile[0]?.filepath) {
-                    const videoResult = await cloudinary.uploader.upload(videoFile[0].filepath, {
-                        resource_type: 'video'
-                    });
-                    videoUrl = videoResult.secure_url;
-                }
+                // if (videoFile && videoFile[0]?.filepath) {
+                //     const videoResult = await cloudinary.uploader.upload(videoFile[0].filepath, {
+                //         resource_type: 'video'
+                //     });
+                //     videoUrl = videoResult.secure_url;
+                // }
 
                 const newBanner = new bannerModel({
                     title,
                     image: imageUrl,
-                    videos: videoUrl,
+                    // videos: videoUrl,
                     bannertype,
                     description,
                     device,
