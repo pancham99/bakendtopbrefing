@@ -18,6 +18,8 @@ const videoRoutes = require('./routes/videoRouters');
 dotenv.config();
 
 const app = express();
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────
