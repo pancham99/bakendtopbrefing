@@ -9,7 +9,7 @@ const moment = require('moment');
 class videoController {
 
     addVideo = async (req, res) => {
-        const form = formidable({ multiples: false, maxFileSize: 200 * 1024 * 1024 }); // 200MB max
+        const form = formidable({ multiples: false,  maxFileSize: 500 * 1024 * 1024,}); // 200MB max
 
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
