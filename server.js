@@ -33,8 +33,8 @@ app.use(cors({
     "https://www.topbriefing.in",
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://bakendtopbrefing.vercel.app/",
-    "https://bakendtopbrefing.vercel.app/api/video/add",
+    "https://topbrefing-admin.vercel.app",
+    "https://topbrefing-admin.vercel.app/dashboard/addVideoContent",
     "https://bakendtopbrefing.vercel.app",
     "https://topbrefing-admin.vercel.app",
     "https://newsportal-seven.vercel.app"
