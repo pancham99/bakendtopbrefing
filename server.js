@@ -18,12 +18,12 @@ const videoRoutes = require('./routes/videoRouters');
 dotenv.config();
 
 const app = express();
-app.use(express.json({ limit: '500mb' }));
-app.use(express.urlencoded({ limit: '500mb', extended: true }));
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '500mb' }));
+app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 
 // CORS setup (Allow specific origins)
 app.use(cors({

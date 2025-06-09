@@ -72,7 +72,7 @@ class videoController {
 
     getAllVideos = async (req, res) => {
         try {
-            const videos = await videoModel.find({});
+            const videos = await videoModel.find().sort({ createdAt: -1 });
             res.status(200).json({ data: videos });
         } catch (error) {
             console.error('Error fetching videos:', error);
