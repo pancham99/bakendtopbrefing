@@ -28,6 +28,7 @@ router.get('/api/category/all', newsController.get_categories);
 router.get('/api/news/category/:category',newsController.get_category_by_name);
 // get_get_news_state name
 router.get('/api/news/state/:state', newsController.get_news_state);
+router.get('/api/search/news', newsController.get_seach_news);
 
 
 

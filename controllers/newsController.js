@@ -11,7 +11,7 @@ const moment = require('moment');
 class newsController {
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo
-        
+
         const form = formidable({})
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -30,7 +30,7 @@ class newsController {
                 title: title[0].trim(),
                 slug: title[0].trim().split('').join('-'),
                 category,
-                state: state[0].trim() ,
+                state: state[0].trim(),
                 description: description[0],
                 image: url,
                 date: moment().format('LL'),
@@ -59,7 +59,7 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req)
-          
+
             const { title, description } = fields
             let url = fields.old_image[0]
 
@@ -345,13 +345,39 @@ class newsController {
             const news = await newsModel.find({ state }).sort({ createdAt: -1 })
             if (news.length === 0) {
                 return res.status(404).json({ message: 'No news found for this state' });
-            }   
+            }
             return res.status(200).json({ news });
         } catch (error) {
             console.log(error.message)
             return res.status(500).json({ message: 'internal server error' })
         }
     }
+
+    get_seach_news = async (req, res) => {
+    const { search } = req.query;
+    console.log(req.query, "search query");
+
+    if (!search) {
+        return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    try {
+        const news = await newsModel.find({
+            title: { $regex: search, $options: 'i' }
+        }).sort({ createdAt: -1 });
+
+        if (news.length === 0) {
+            return res.status(404).json({ message: 'No news found for this search query' });
+        }
+
+        return res.status(200).json({ news });
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+
 }
 
 

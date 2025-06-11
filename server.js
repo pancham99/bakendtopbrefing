@@ -9,8 +9,8 @@ const morgan = require('morgan'); // optional
 const db_connect = require('./utils/db');
 const authRoutes = require('./routes/authRouters');
 const newsRoutes = require('./routes/newsRoute');
-const bannerRoutes = require('./routes/bannerRouters'); 
-const videoRoutes = require('./routes/videoRouters'); 
+const bannerRoutes = require('./routes/bannerRouters');
+const videoRoutes = require('./routes/videoRouters');
 
 
 
@@ -27,20 +27,24 @@ app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 
 // CORS setup (Allow specific origins)
 app.use(cors({
-  origin: [
+
+  cors: {
+    origin: "*",  // Allow all origins for development; change to specific origins in production
+  }
+  // origin: [
 
 
 
-    "https://www.topbriefing.in/",
-    "https://www.topbriefing.in",
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://topbrefing-admin.vercel.app",
-    "https://topbrefing-admin.vercel.app/dashboard/addVideoContent",
-    "https://bakendtopbrefing.vercel.app",
-    "https://topbrefing-admin.vercel.app",
-    "https://newsportal-seven.vercel.app"
-  ],
+  //   "https://www.topbriefing.in/",
+  //   "https://www.topbriefing.in",
+  //   "http://localhost:5173",
+  //   "http://localhost:3000",
+  //   "https://topbrefing-admin.vercel.app",
+  //   "https://topbrefing-admin.vercel.app/dashboard/addVideoContent",
+  //   "https://bakendtopbrefing.vercel.app",
+  //   "https://topbrefing-admin.vercel.app",
+  //   "https://newsportal-seven.vercel.app"
+  // ],
 }));
 
 // Optional logging
