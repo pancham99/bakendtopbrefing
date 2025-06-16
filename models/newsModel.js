@@ -24,7 +24,7 @@ const newsSchem = new Schema({
     },
     category: {
         type: String,
-        required: true
+        // required: true
     },
     description: {
         type: String,

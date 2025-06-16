@@ -27,24 +27,7 @@ app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
 
 // CORS setup (Allow specific origins)
 app.use(cors({
-
-  cors: {
-    origin: "*",  // Allow all origins for development; change to specific origins in production
-  }
-  // origin: [
-
-
-
-  //   "https://www.topbriefing.in/",
-  //   "https://www.topbriefing.in",
-  //   "http://localhost:5173",
-  //   "http://localhost:3000",
-  //   "https://topbrefing-admin.vercel.app",
-  //   "https://topbrefing-admin.vercel.app/dashboard/addVideoContent",
-  //   "https://bakendtopbrefing.vercel.app",
-  //   "https://topbrefing-admin.vercel.app",
-  //   "https://newsportal-seven.vercel.app"
-  // ],
+  origin: "*"
 }));
 
 // Optional logging

@@ -9,43 +9,87 @@ const moment = require('moment');
 
 
 class newsController {
+    // add_news = async (req, res) => {
+    //     const { id, category, name } = req.userInfo
+
+    //     const form = formidable({})
+    //     cloudinary.config({
+    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
+    //         api_key: process.env.CLODINARY_API_KEY,
+    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
+    //         secure: true
+    //     })
+
+    //     try {
+    //         const [fields, files] = await form.parse(req)
+
+    //         const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
+    //         const { title, description, state } = fields
+    //         const finalCategory = state && state[0]?.trim() !== "" ? null : category;
+    //         const news = await newsModel.create({
+    //             writerId: id,
+    //             title: title[0].trim(),
+    //             slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
+    //             category: finalCategory,
+    //             state: state[0].trim(),
+    //             description: description[0],
+    //             image: url,
+    //             date: moment().format('LL'),
+    //             writerName: name,
+    //             count: 0
+    //         })
+
+    //         console.log(news)
+
+    //         return res.status(200).json({ message: 'news added successfully', news })
+
+    //     } catch (error) {
+    //         return res.status(500).json({ message: 'internal server error' })
+    //     }
+    // }
+
     add_news = async (req, res) => {
-        const { id, category, name } = req.userInfo
+    const { id, category, name } = req.userInfo;
 
-        const form = formidable({})
-        cloudinary.config({
-            cloud_name: process.env.CLODINARY_CLOUD_NAME,
-            api_key: process.env.CLODINARY_API_KEY,
-            api_secret: process.env.CLODINARY_API_SECRET_KEY,
-            secure: true
-        })
+    const form = formidable({});
+    cloudinary.config({
+        cloud_name: process.env.CLODINARY_CLOUD_NAME,
+        api_key: process.env.CLODINARY_API_KEY,
+        api_secret: process.env.CLODINARY_API_SECRET_KEY,
+        secure: true
+    });
 
-        try {
-            const [fields, files] = await form.parse(req)
+    try {
+        const [fields, files] = await form.parse(req);
+        const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
 
-            const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
-            const { title, description, state } = fields
-            const news = await newsModel.create({
-                writerId: id,
-                title: title[0].trim(),
-                slug: title[0].trim().split('').join('-'),
-                category,
-                state: state[0].trim(),
-                description: description[0],
-                image: url,
-                date: moment().format('LL'),
-                writerName: name,
-                count: 0
-            })
+        const { title, description, state } = fields;
 
-            console.log(news)
+        // logic: state दिया तो category null कर दो
+        const finalCategory = state && state[0]?.trim() !== "" ? null : category;
 
-            return res.status(200).json({ message: 'news added successfully', news })
+        const news = await newsModel.create({
+            writerId: id,
+            title: title[0].trim(),
+            slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
+            category: finalCategory,
+            state: state[0]?.trim() || null,
+            description: description[0]?.trim() || null,
+            image: url,
+            date: moment().format('LL'),
+            writerName: name,
+            count: 0
+        });
 
-        } catch (error) {
-            return res.status(500).json({ message: 'internal server error' })
-        }
+        console.log(news);
+        return res.status(200).json({ message: 'news added successfully', news });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'internal server error' });
     }
+}
+
 
     update_news = async (req, res) => {
         const { news_id } = req.params
@@ -354,28 +398,41 @@ class newsController {
     }
 
     get_seach_news = async (req, res) => {
-    const { search } = req.query;
-    console.log(req.query, "search query");
+        const { search } = req.query;
+        console.log(req.query, "search query");
 
-    if (!search) {
-        return res.status(400).json({ message: 'Search query is required' });
-    }
-
-    try {
-        const news = await newsModel.find({
-            title: { $regex: search, $options: 'i' }
-        }).sort({ createdAt: -1 });
-
-        if (news.length === 0) {
-            return res.status(404).json({ message: 'No news found for this search query' });
+        if (!search) {
+            return res.status(400).json({ message: 'Search query is required' });
         }
 
-        return res.status(200).json({ news });
-    } catch (error) {
-        console.log(error.message);
-        return res.status(500).json({ message: 'Internal server error' });
+        try {
+            const news = await newsModel.find({
+                title: { $regex: search, $options: 'i' }
+            }).sort({ createdAt: -1 });
+
+            if (news.length === 0) {
+                return res.status(404).json({ message: 'No news found for this search query' });
+            }
+
+            return res.status(200).json({ news });
+        } catch (error) {
+            console.log(error.message);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    };
+
+    get_recent_news = async (req, res) => {
+        try {
+            const recentNews = await newsModel.find({status: 'active' }).limit(5).sort({ createdAt: -1 })
+            return res.status(200).json({ recentNews });
+        } catch (error) {
+            console.log(error.message);
+            return res.status(500).json({ message: 'internal server error' });
+        }
     }
-};
+
+
+
 
 
 }
