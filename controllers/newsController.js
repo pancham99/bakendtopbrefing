@@ -49,46 +49,46 @@ class newsController {
     // }
 
     add_news = async (req, res) => {
-    const { id, category, name } = req.userInfo;
+        const { id, category, name } = req.userInfo;
 
-    const form = formidable({});
-    cloudinary.config({
-        cloud_name: process.env.CLODINARY_CLOUD_NAME,
-        api_key: process.env.CLODINARY_API_KEY,
-        api_secret: process.env.CLODINARY_API_SECRET_KEY,
-        secure: true
-    });
-
-    try {
-        const [fields, files] = await form.parse(req);
-        const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
-
-        const { title, description, state } = fields;
-
-        // logic: state दिया तो category null कर दो
-        const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-
-        const news = await newsModel.create({
-            writerId: id,
-            title: title[0].trim(),
-            slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
-            category: finalCategory,
-            state: state[0]?.trim() || null,
-            description: description[0]?.trim() || null,
-            image: url,
-            date: moment().format('LL'),
-            writerName: name,
-            count: 0
+        const form = formidable({});
+        cloudinary.config({
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
+            secure: true
         });
 
-        console.log(news);
-        return res.status(200).json({ message: 'news added successfully', news });
+        try {
+            const [fields, files] = await form.parse(req);
+            const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
 
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'internal server error' });
+            const { title, description, state } = fields;
+
+            // logic: state दिया तो category null कर दो
+            const finalCategory = state && state[0]?.trim() !== "" ? null : category;
+
+            const news = await newsModel.create({
+                writerId: id,
+                title: title[0].trim(),
+                slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
+                category: finalCategory,
+                state: state[0]?.trim() || null,
+                description: description[0]?.trim() || null,
+                image: url,
+                date: moment().format('LL'),
+                writerName: name,
+                count: 0
+            });
+
+            console.log(news);
+            return res.status(200).json({ message: 'news added successfully', news });
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({ message: 'internal server error' });
+        }
     }
-}
 
 
     update_news = async (req, res) => {
@@ -363,16 +363,57 @@ class newsController {
         }
     }
 
+    // delete_news = async (req, res) => {
+    //     const { news_id } = req.params
+    //     const { role } = req.userInfo
+
+    //     if (role === 'admin') {
+    //         try {
+    //             const news = await newsModel.findByIdAndDelete(news_id)
+    //             if (!news) {
+    //                 return res.status(404).json({ message: 'news not found' })
+    //             }
+    //             return res.status(200).json({ message: 'news deleted successfully', status: 'success' })
+    //         } catch (error) {
+    //             console.log(error.message)
+    //             return res.status(500).json({ message: 'internal server error' })
+    //         }
+    //     } else {
+    //         return res.status(401).json({ message: 'you cannot access this api server error' })
+    //     }
+    // }
+
+
     delete_news = async (req, res) => {
         const { news_id } = req.params
         const { role } = req.userInfo
 
+        cloudinary.config({
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
+            secure: true
+        });
+
         if (role === 'admin') {
             try {
-                const news = await newsModel.findByIdAndDelete(news_id)
+                // Find the news first to get the image URL
+                const news = await newsModel.findById(news_id)
                 if (!news) {
                     return res.status(404).json({ message: 'news not found' })
                 }
+
+                // Extract public_id from the image URL
+                if (news.image) {
+                    const urlParts = news.image.split('/');
+                    const fileName = urlParts[urlParts.length - 1];
+                    const publicId = 'news_images/' + fileName.split('.')[0];
+                    await cloudinary.uploader.destroy(publicId);
+                }
+
+                // Now delete the news document
+                await newsModel.findByIdAndDelete(news_id);
+
                 return res.status(200).json({ message: 'news deleted successfully', status: 'success' })
             } catch (error) {
                 console.log(error.message)
@@ -382,6 +423,8 @@ class newsController {
             return res.status(401).json({ message: 'you cannot access this api server error' })
         }
     }
+
+
     get_news_state = async (req, res) => {
         const { state } = req.params
 
@@ -423,7 +466,7 @@ class newsController {
 
     get_recent_news = async (req, res) => {
         try {
-            const recentNews = await newsModel.find({status: 'active' }).limit(5).sort({ createdAt: -1 })
+            const recentNews = await newsModel.find({ status: 'active' }).limit(5).sort({ createdAt: -1 })
             return res.status(200).json({ recentNews });
         } catch (error) {
             console.log(error.message);

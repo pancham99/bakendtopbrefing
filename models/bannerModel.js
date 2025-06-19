@@ -24,6 +24,11 @@ const bannerSchem = new Schema({
         type: String,
         default: 'pending'
     },
+    day: {
+        type: Number,   
+        default: 0
+    },
+    expireAt: Date ,
     device: {
         type: String,   
         default: 'all'

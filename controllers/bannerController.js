@@ -8,7 +8,7 @@ const moment = require('moment');
 
 class bannerController {
     addBanner = async (req, res) => {
-        const form = formidable({ multiples: false }); // we are uploading only one image and one video
+        const form = formidable({ multiples: false }); 
 
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -28,7 +28,10 @@ class bannerController {
             const bannertype = fields.bannertype?.[0] || '';
             const device = fields.device?.[0] || '';
             const imageFile = files.image;
+            const day = parseInt(fields.day?.[0]) || 0;
             // const videoFile = files.videos;
+
+            console.log('Parsed day:', day);
            
 
             if (!title || !bannertype || !device) {
@@ -54,10 +57,12 @@ class bannerController {
                 const newBanner = new bannerModel({
                     title,
                     image: imageUrl,
-                    // videos: videoUrl,
                     bannertype,
                     description,
                     device,
+                    day,
+                    // expireAt: new Date(Date.now() + day * 24 * 60 * 60 * 1000),
+                    expireAt: new Date(Date.now() + day * 60 * 1000)
                 });
 
                 await newBanner.save();
