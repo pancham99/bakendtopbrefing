@@ -80,12 +80,7 @@ class newsController {
                 writerName: name,
                 count: 0
             });
-
-            // ✅ Emit new news event to all clients
-            const io = req.app.get('io');
-            io.emit('new_news', news); // this will reach frontend
-
-            console.log(news);
+            
             return res.status(200).json({ message: 'news added successfully', news });
 
         } catch (error) {

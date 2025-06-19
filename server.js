@@ -4,8 +4,6 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan'); // optional
-
-const http = require('http'); // for socket.io if needed
 // const serverless = require('serverless-http'); // for vercel or netlify
 
 const db_connect = require('./utils/db');
@@ -20,19 +18,6 @@ const videoRoutes = require('./routes/videoRouters');
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app); // 👈 wrap express in http
-
-const io = require('socket.io')(server, {
-  cors: {
-    origin: '*', // allow all or specify frontend URL
-    // methods: ['GET', 'POST']
-  }
-});
-
-
-// Make io globally accessible
-app.set('io', io); // 👈 attach io to app
-// ─── Port Configuration ──────────────────────────────────
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────
