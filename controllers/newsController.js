@@ -465,7 +465,7 @@ class newsController {
 
     get_recent_news = async (req, res) => {
         try {
-            const recentNews = await newsModel.find({ status: 'active' }).limit(5).sort({ createdAt: -1 })
+            const recentNews = await newsModel.find({ status: 'active' }).limit(10).sort({ createdAt: -1 })
             return res.status(200).json({ recentNews });
         } catch (error) {
             console.log(error.message);
