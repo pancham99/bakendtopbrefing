@@ -31,6 +31,10 @@ router.get('/api/news/state/:state', newsController.get_news_state);
 router.get('/api/search/news', newsController.get_seach_news);
 router.get('/api/news/recent/news', newsController.get_recent_news );
 
+// delete router
+router.post('/news/delete-multiple', middleware.auth, middleware.role, newsController.delete_multiple_news);
+
+
 
 
 

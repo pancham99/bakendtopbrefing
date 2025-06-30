@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRouters');
 const newsRoutes = require('./routes/newsRoute');
 const bannerRoutes = require('./routes/bannerRouters');
 const videoRoutes = require('./routes/videoRouters');
+const advertisementRoutes = require('./routes/advertisementRouters');
 
 
 
@@ -40,6 +41,7 @@ app.use('/', authRoutes);
 app.use('/', newsRoutes);
 app.use('/', bannerRoutes);
 app.use('/', videoRoutes);
+app.use('/', advertisementRoutes);
 
 
 
