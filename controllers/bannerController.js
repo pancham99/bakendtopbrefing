@@ -8,7 +8,7 @@ const moment = require('moment');
 
 class bannerController {
     addBanner = async (req, res) => {
-        const form = formidable({ multiples: false }); 
+        const form = formidable({ multiples: false });
 
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -32,7 +32,7 @@ class bannerController {
             // const videoFile = files.videos;
 
             console.log('Parsed day:', day);
-           
+
 
             if (!title || !bannertype || !device) {
                 return res.status(400).json({ message: 'Please fill all required fields' });
@@ -171,15 +171,33 @@ class bannerController {
     deleteBanner = async (req, res) => {
         const { _id } = req.params;
 
-        if (!ObjectId.isValid(_id)) {
+        cloudinary.config({
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
+            secure: true
+        });
+
+        if (!_id) {
             return res.status(400).json({ message: 'Invalid banner ID' });
         }
 
         try {
-            const deletedBanner = await bannerModel.findByIdAndDelete(_id);
-            if (!deletedBanner) {
+
+            const banner = await bannerModel.findById(_id)
+
+            if (!banner) {
                 return res.status(404).json({ message: 'Banner not found' });
             }
+
+            if (banner.image) {
+                const urlParts = banner.image.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = 'news_images/' + fileName.split('.')[0];
+                await cloudinary.uploader.destroy(publicId);
+            }
+
+             await bannerModel.findByIdAndDelete(_id);
             return res.status(200).json({ message: 'Banner deleted successfully' });
         } catch (error) {
             console.error(error);
