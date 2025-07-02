@@ -52,7 +52,7 @@ class advertisementController {
                 let videoUrl = '';
 
                 if (imageFile && imageFile[0]?.filepath) {
-                    const uploadResult = await cloudinary.uploader.upload(imageFile[0].filepath);
+                    const uploadResult = await cloudinary.uploader.upload(imageFile[0].filepath, { folder: 'news_images' });
                     imageUrl = uploadResult.secure_url;
                 }
 
@@ -271,19 +271,27 @@ class advertisementController {
         });
 
         try {
-            const advertisement = await advertisementModel.findByIdAndDelete(_id);
 
-            if (!advertisement) {
-                return res.status(404).json({ message: 'Advertisement not found' });
+            const advertis = await advertisementModel.findById(_id)
+            if (advertis.image) {
+                const urlParts = advertis.image.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = 'news_images/' + fileName.split('.')[0];
+                await cloudinary.uploader.destroy(publicId);
             }
+             await advertisementModel.findByIdAndDelete(_id);
+
+            // if (!advertisement) {
+            //     return res.status(404).json({ message: 'Advertisement not found' });
+            // }
 
             // Optionally, you can also delete the image and video from Cloudinary
-            if (advertisement.image) {
-                await cloudinary.uploader.destroy(advertisement.image);
-            }
-            if (advertisement.video) {
-                await cloudinary.uploader.destroy(advertisement.video, { resource_type: 'video' });
-            }
+            // if (advertisement.image) {
+            //     await cloudinary.uploader.destroy(advertisement.image);
+            // }
+            // if (advertisement.video) {
+            //     await cloudinary.uploader.destroy(advertisement.video, { resource_type: 'video' });
+            // }
 
             return res.status(200).json({ message: 'Advertisement deleted successfully' });
         } catch (error) {
