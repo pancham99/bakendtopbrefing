@@ -102,7 +102,7 @@ class advertisementController {
 
     getAllAdvertisements = async (req, res) => {
         try {
-            const advertisements = await advertisementModel.find().sort({ priority: -1, startDate: -1 });
+            const advertisements = await advertisementModel.find().sort({ createdAt: -1 });
             return res.status(200).json(advertisements);
         } catch (error) {
             console.error('Error fetching advertisements:', error);
