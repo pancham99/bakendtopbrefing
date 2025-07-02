@@ -43,7 +43,7 @@ class bannerController {
                 let videoUrl = '';
 
                 if (imageFile && imageFile[0]?.filepath) {
-                    const uploadResult = await cloudinary.uploader.upload(imageFile[0].filepath);
+                    const uploadResult = await cloudinary.uploader.upload(imageFile[0].filepath, { folder: 'news_images' });
                     imageUrl = uploadResult.secure_url;
                 }
 

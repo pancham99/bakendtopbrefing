@@ -80,7 +80,7 @@ class newsController {
                 writerName: name,
                 count: 0
             });
-            
+
             return res.status(200).json({ message: 'news added successfully', news });
 
         } catch (error) {
@@ -424,52 +424,52 @@ class newsController {
     }
 
     delete_multiple_news = async (req, res) => {
-    const { ids } = req.body;
-    const { role } = req.userInfo;
+        const { newsId } = req.body;
+        const { role } = req.userInfo;
 
-    cloudinary.config({
-        cloud_name: process.env.CLODINARY_CLOUD_NAME,
-        api_key: process.env.CLODINARY_API_KEY,
-        api_secret: process.env.CLODINARY_API_SECRET_KEY,
-        secure: true
-    });
+        cloudinary.config({
+            cloud_name: process.env.CLODINARY_CLOUD_NAME,
+            api_key: process.env.CLODINARY_API_KEY,
+            api_secret: process.env.CLODINARY_API_SECRET_KEY,
+            secure: true
+        });
 
-    if (role !== 'admin') {
-        return res.status(401).json({ message: 'Unauthorized access' });
-    }
-
-    if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: 'Invalid or empty IDs array' });
-    }
-
-    try {
-        // Find all news by IDs
-        const newsItems = await newsModel.find({ _id: { $in: ids } });
-
-        // Delete images from Cloudinary if present
-        for (const news of newsItems) {
-            if (news.image) {
-                const urlParts = news.image.split('/');
-                const fileName = urlParts[urlParts.length - 1];
-                const publicId = 'news_images/' + fileName.split('.')[0];
-
-                try {
-                    await cloudinary.uploader.destroy(publicId);
-                } catch (cloudErr) {
-                    console.warn(`Failed to delete image for ${news._id}:`, cloudErr.message);
-                }
-            }
+        if (role !== 'admin') {
+            return res.status(401).json({ message: 'Unauthorized access' });
         }
 
-        // Delete news items from DB
-        await newsModel.deleteMany({ _id: { $in: ids } });
+        if (!Array.isArray(newsId) || newsId.length === 0) {
+            return res.status(400).json({ message: 'Invalid or empty newsId array' });
+        }
 
-        return res.status(200).json({ message: 'Selected news deleted successfully', status: 'success' });
-    } catch (error) {
-        console.error(error.message);
-        return res.status(500).json({ message: 'Internal server error' });
+        try {
+            // Find all news by newsId
+            const newsItems = await newsModel.find({ _id: { $in: newsId } });
+
+            // Delete images from Cloudinary if present
+            for (const news of newsItems) {
+                if (news.image) {
+                    const urlParts = news.image.split('/');
+                    const fileName = urlParts[urlParts.length - 1];
+                    const publicId = 'news_images/' + fileName.split('.')[0];
+
+                    try {
+                        await cloudinary.uploader.destroy(publicId);
+                    } catch (cloudErr) {
+                        console.warn(`Failed to delete image for ${news._id}:`, cloudErr.message);
+                    }
+                }
+            }
+
+            // Delete news items from DB
+            await newsModel.deleteMany({ _id: { $in: newsId } });
+
+            return res.status(200).json({ message: 'Selected news deleted successfully', status: 'success' });
+        } catch (error) {
+            console.error(error.message);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
     }
-}
 
 
 
