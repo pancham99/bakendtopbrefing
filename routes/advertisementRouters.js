@@ -7,5 +7,6 @@ router.get('/api/advertisement/bases/input', advertisementController.getAdvertis
 router.put('/api/advertisement/update/:_id', advertisementController.updateAdvertisement);
 router.get('/api/advertisement/get/:_id', advertisementController.getAdvertisementById);
 router.delete('/api/advertisement/delete/:_id', advertisementController.deleteAdvertisement);
+router.put('/api/advertisement/status/:_id', advertisementController.update_ststus_advertisement);
 
 module.exports = router;

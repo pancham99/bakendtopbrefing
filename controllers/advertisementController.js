@@ -231,19 +231,11 @@ class advertisementController {
     };
 
     update_ststus_advertisement = async (req, res) => {
-        const { id } = req.params;
+        const { _id } = req.params;
         const { status } = req.body;
 
-        if (!status || !['pending', 'active', 'deactive'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status value' });
-        }
-
         try {
-            const updatedAdvertisement = await advertisementModel.findByIdAndUpdate(
-                ObjectId(id),
-                { status },
-                { new: true, runValidators: true }
-            );
+             const updatedAdvertisement = await advertisementModel.findByIdAndUpdate(_id, { status }, { new: true })
 
             if (!updatedAdvertisement) {
                 return res.status(404).json({ message: 'Advertisement not found' });
