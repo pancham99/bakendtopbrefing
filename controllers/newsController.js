@@ -136,11 +136,11 @@ class newsController {
             if (subscribers.length > 0) {
                 // Prepare email content
                 const subject = `📰 New News Published: ${title[0].trim()}`;
-                const newsLink = `${process.env.FRONTEND_URL}/news/${news.slug}`;
+                const newsLink = `https://www.topbriefing.in/`;
                 const message = `
                 <h2>${title[0].trim()}</h2>
                 <p>${description[0]?.trim()?.slice(0, 150)}...</p>
-                <a href="${newsLink}" 
+                <a href="https://www.topbriefing.in/" 
                     style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
                     Read Full Article
                 </a>

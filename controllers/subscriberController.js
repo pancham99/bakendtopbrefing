@@ -24,6 +24,25 @@ class subscribeController {
             return res.status(500).json({ message: 'Internal server error' });
         }
     };
+
+    get_all_subscribers = async (req, res) => {
+        try {
+
+            const subscribers = await subscriberModel.find({}, 'email createdAt')
+            return res.status(200).json({
+                message: 'All subscribers fetched successfully.',
+                count: subscribers.length,
+                subscribers,
+            });
+
+        } catch (error) {
+
+            console.error('Error fetching subscribers:', error);
+            return res.status(500).json({ message: "internal server error" })
+
+        }
+
+    }
 }
 
 module.exports = new subscribeController()
