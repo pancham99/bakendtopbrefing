@@ -136,7 +136,7 @@ class newsController {
             if (subscribers.length > 0) {
                 // Prepare email content
                 const subject = `📰 New News Published: ${title[0].trim()}`;
-                const newsLink = `https://www.topbriefing.in/`;
+                // const newsLink = `https://www.topbriefing.in/`;
                 const message = `
                 <h2>${title[0].trim()}</h2>
                 <p>${description[0]?.trim()?.slice(0, 150)}...</p>
