@@ -12,11 +12,4 @@ router.get('/api/news/get_user', middleware.auth, authController.get_user)
 router.put('/api/news/writer_status-update/:user_id', middleware.auth, authController.update_user_status)
 router.put('/api/news/rest_user_password',middleware.auth,  authController.reset_password)
 
-<<<<<<< HEAD
-
-
-
-
-=======
->>>>>>> cdd13304 (Initial commit)
 module.exports = router;
