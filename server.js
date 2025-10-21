@@ -14,10 +14,6 @@ const videoRoutes = require('./routes/videoRouters');
 const advertisementRoutes = require('./routes/advertisementRouters');
 const userRoutes = require('./routes/userRouters'); 
 const commentRoutes = require('./routes/commentRouters'); // Uncomment if you have comment routes
-<<<<<<< HEAD
-=======
-const subscribeRouters = require('./routes/subscribeRouters');
->>>>>>> cdd13304 (Initial commit)
 
 
 
@@ -30,11 +26,7 @@ const PORT = process.env.PORT || 5000;
 // ─── Middleware ───────────────────────────────────────────
 // app.use(bodyParser.json());
 app.use(bodyParser.json({ limit: '500mb' }));
-<<<<<<< HEAD
 app.use(bodyParser.urlencoded({ limit: '500mb', extended: true }));
-=======
-app.use(bodyParser.urlencoded({extended: true }));
->>>>>>> cdd13304 (Initial commit)
 
 // CORS setup (Allow specific origins)
 app.use(cors({
@@ -54,10 +46,8 @@ app.use('/', videoRoutes);
 app.use('/', advertisementRoutes);
 app.use('/', userRoutes); // Uncomment if you have user routes
 app.use('/', commentRoutes); // Uncomment if you have comment routes
-<<<<<<< HEAD
-=======
+const subscribeRouters = require('./routes/subscribeRouters');
 app.use('/', subscribeRouters)
->>>>>>> cdd13304 (Initial commit)
 
 
 

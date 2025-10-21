@@ -3,11 +3,8 @@ const cloudinary = require('cloudinary').v2;
 const newsModel = require('../models/newsModel');
 const authModel = require('../models/authModel');
 const galleryModel = require('../models/galleryModel');
-<<<<<<< HEAD
-=======
 const subscriberModel = require('../models/subscriberModel'); // model for subscribers (email list)
 const sendMail = require('../utils/sendMail'); // utility function to send emails
->>>>>>> cdd13304 (Initial commit)
 const { mongo: { ObjectId } } = require('mongoose');
 
 const moment = require('moment');
@@ -53,52 +50,6 @@ class newsController {
     //     }
     // }
 
-<<<<<<< HEAD
-=======
-    // add_news = async (req, res) => {
-    //     const { id, category, name } = req.userInfo;
-
-    //     const form = formidable({});
-    //     cloudinary.config({
-    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
-    //         api_key: process.env.CLODINARY_API_KEY,
-    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
-    //         secure: true
-    //     });
-
-    //     try {
-    //         const [fields, files] = await form.parse(req);
-    //         const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
-
-    //         const { title, description, state } = fields;
-
-    //         // logic: state दिया तो category null कर दो
-    //         const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-
-    //         const news = await newsModel.create({
-    //             writerId: id,
-    //             title: title[0].trim(),
-    //             slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
-    //             category: finalCategory,
-    //             state: state[0]?.trim() || null,
-    //             description: description[0]?.trim() || null,
-    //             image: url,
-    //             date: moment().format('LL'),
-    //             writerName: name,
-    //             count: 0
-    //         });
-
-    //         return res.status(200).json({ message: 'news added successfully', news });
-
-    //     } catch (error) {
-    //         console.log(error);
-    //         return res.status(500).json({ message: 'internal server error' });
-    //     }
-    // }
-
-
-
->>>>>>> cdd13304 (Initial commit)
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo;
 
@@ -112,7 +63,6 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req);
-<<<<<<< HEAD
             const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
 
             const { title, description, state } = fields;
@@ -120,19 +70,6 @@ class newsController {
             // logic: state दिया तो category null कर दो
             const finalCategory = state && state[0]?.trim() !== "" ? null : category;
 
-=======
-            const { title, description, state } = fields;
-
-            // Upload image to cloudinary
-            const { url } = await cloudinary.uploader.upload(files.image[0].filepath, {
-                folder: 'news_images'
-            });
-
-            // If `state` is given, nullify category
-            const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-
-            // Create news entry
->>>>>>> cdd13304 (Initial commit)
             const news = await newsModel.create({
                 writerId: id,
                 title: title[0].trim(),
@@ -146,22 +83,12 @@ class newsController {
                 count: 0
             });
 
-<<<<<<< HEAD
-            return res.status(200).json({ message: 'news added successfully', news });
-
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({ message: 'internal server error' });
-        }
-    }
-=======
-            // Fetch all subscribers
+            // return res.status(200).json({ message: 'news added successfully', news });
             const subscribers = await subscriberModel.find({}, 'email');
 
             if (subscribers.length > 0) {
-                // Prepare email content
-                const subject = `📰 New News Published: ${title[0].trim()}`;
-                const newsLink = `${process.env.FRONTEND_URL}/news/${news.slug}`;
+                const subject = `📰 New Article Published: ${title[0].trim()}`;
+                const newsLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/news/${news.slug}`;
                 const message = `
                 <h2>${title[0].trim()}</h2>
                 <p>${description[0]?.trim()?.slice(0, 150)}...</p>
@@ -173,25 +100,30 @@ class newsController {
                 <small>Published by ${name} on ${moment().format('LL')}</small>
             `;
 
-                // Send emails in background (not blocking response)
-                subscribers.forEach(sub => {
-                    sendMail(sub.email, subject, message).catch(err =>
-                        console.error(`Failed to send mail to ${sub.email}:`, err)
-                    );
+                // ✅ Send notification emails asynchronously
+                subscribers.forEach((sub) => {
+                    sendMail(sub.email, subject, message).catch((err) => {
+                        console.error(`❌ Failed to send email to ${sub.email}:`, err);
+                    });
                 });
             }
 
             return res.status(200).json({
-                message: 'News added successfully and notifications sent to subscribers.',
-                news
+                message: '✅ News added successfully. Notifications sent to subscribers.',
+                news,
             });
 
+
+
+
         } catch (error) {
-            console.error('Error adding news:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+            console.log(error);
+            return res.status(500).json({ message: 'internal server error' });
         }
-    };
->>>>>>> cdd13304 (Initial commit)
+
+
+
+    }
 
 
     update_news = async (req, res) => {
