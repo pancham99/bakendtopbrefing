@@ -23,6 +23,10 @@ router.get('/api/popular/news', newsController.get_popular_news);
 router.get('/api/latest/news', newsController.get_latest_news);
 
 router.get('/api/news/details/:slug', newsController.get_news);
+router.get('/api/news/details/title/:title', newsController.get_news_title);
+
+
+
 router.get('/api/category/all', newsController.get_categories);
 
 router.get('/api/news/category/:category',newsController.get_category_by_name);

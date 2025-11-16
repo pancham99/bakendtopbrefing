@@ -1,6 +1,48 @@
 // const mongoose = require('mongoose');
 // const newsModel = require('./models/newsModel');
 
+// mongoose.connect("mongodb+srv://pancham047:vVs7jQEifTMefzyc@cluster0.o5koy.mongodb.net/");
+
+// function generateHindiSlug(title) {
+//     return title
+//         .toLowerCase()
+//         .trim()
+//         .replace(/[^\p{L}\p{N}]+/gu, "-")
+//         .replace(/-+/g, "-")
+//         .replace(/^-+|-+$/g, "");
+// }
+
+// async function fixSlugs() {
+//     try {
+//         const allNews = await newsModel.find();
+//         console.log(`Total news found: ${allNews.length}`);
+
+//         for (let item of allNews) {
+//             const newSlug = generateHindiSlug(item.title);
+
+//             await newsModel.updateOne(
+//                 { _id: item._id },
+//                 { $set: { slug: newSlug } }
+//             );
+
+//             console.log(`Updated: ${item.title} → ${newSlug}`);
+//         }
+
+//         console.log("🔥 All old slugs updated successfully!");
+//         process.exit(0);
+
+//     } catch (err) {
+//         console.error("Error fixing slugs:", err);
+//         process.exit(1);
+//     }
+// }
+
+// fixSlugs();
+
+
+
+
+
 // mongoose.connect('mongodb+srv://pancham047:vVs7jQEifTMefzyc@cluster0.o5koy.mongodb.net/')
 //   .then(() => {
 //     console.log('Connected to MongoDB');
