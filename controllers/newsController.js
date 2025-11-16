@@ -93,87 +93,10 @@ class newsController {
 
 
 
-    // add_news = async (req, res) => {
-    //     const { id, category, name } = req.userInfo;
-
-    //     const form = formidable({});
-    //     cloudinary.config({
-    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
-    //         api_key: process.env.CLODINARY_API_KEY,
-    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
-    //         secure: true
-    //     });
-
-    //     try {
-    //         const [fields, files] = await form.parse(req);
-    //         const { title, description, state } = fields;
-
-    //         // Upload image to cloudinary
-    //         const { url } = await cloudinary.uploader.upload(files.image[0].filepath, {
-    //             folder: 'news_images'
-    //         });
-
-    //         // If `state` is given, nullify category
-    //         const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-
-    //         // Create news entry
-    //         const news = await newsModel.create({
-    //             writerId: id,
-    //             title: title[0].trim(),
-    //             slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
-    //             category: finalCategory,
-    //             state: state[0]?.trim() || null,
-    //             description: description[0]?.trim() || null,
-    //             image: url,
-    //             date: moment().format('LL'),
-    //             writerName: name,
-    //             count: 0
-    //         });
-
-    //         // Fetch all subscribers
-    //         const subscribers = await subscriberModel.find({}, 'email');
-
-    //         if (subscribers.length > 0) {
-    //             // Prepare email content
-    //             const subject = `📰 New News Published: ${title[0].trim()}`;
-    //             // const newsLink = `https://www.topbriefing.in/`;
-    //             const message = `
-    //             <h2>${title[0].trim()}</h2>
-    //             <p>${description[0]?.trim()?.slice(0, 150)}...</p>
-    //             <a href="https://www.topbriefing.in/" 
-    //                 style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
-    //                 Read Full Article
-    //             </a>
-    //             <br><br>
-    //             <small>Published by ${name} on ${moment().format('LL')}</small>
-    //         `;
-
-    //             // Send emails in background (not blocking response)
-    //             subscribers.forEach(sub => {
-    //                 sendMail(sub.email, subject, message).catch(err =>
-    //                     console.error(`Failed to send mail to ${sub.email}:`, err)
-    //                 );
-    //             });
-    //         }
-
-    //         return res.status(200).json({
-    //             message: 'News added successfully and notifications sent to subscribers.',
-    //             news
-    //         });
-
-    //     } catch (error) {
-    //         console.error('Error adding news:', error);
-    //         return res.status(500).json({ message: 'Internal server error' });
-    //     }
-    // };
-
-
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo;
 
         const form = formidable({});
-
-        // Cloudinary config
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
             api_key: process.env.CLODINARY_API_KEY,
@@ -181,58 +104,43 @@ class newsController {
             secure: true
         });
 
-        // Function for Hindi-safe slug
-        const generateHindiSlug = (title) => {
-            return title
-                .toLowerCase()
-                .trim()
-                .replace(/[^\p{L}\p{N}]+/gu, "-") // Keep only letters & numbers
-                .replace(/-+/g, "-")
-                .replace(/^-+|-+$/g, ""); // Remove hyphens from start/end
-        };
-
         try {
             const [fields, files] = await form.parse(req);
             const { title, description, state } = fields;
 
-            const cleanTitle = title[0].trim();
-            const cleanDescription = description?.[0]?.trim() ?? "";
-            const cleanState = state?.[0]?.trim() || null;
-
-            // Generate clean Hindi slug
-            const slug = generateHindiSlug(cleanTitle);
-
-            // Upload image
+            // Upload image to cloudinary
             const { url } = await cloudinary.uploader.upload(files.image[0].filepath, {
                 folder: 'news_images'
             });
 
-            // If state is selected → category null
-            const finalCategory = cleanState ? null : category;
+            // If `state` is given, nullify category
+            const finalCategory = state && state[0]?.trim() !== "" ? null : category;
 
-            // Create news
+            // Create news entry
             const news = await newsModel.create({
                 writerId: id,
-                title: cleanTitle,
-                slug,
+                title: title[0].trim(),
+                slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
                 category: finalCategory,
-                state: cleanState,
-                description: cleanDescription,
+                state: state[0]?.trim() || null,
+                description: description[0]?.trim() || null,
                 image: url,
                 date: moment().format('LL'),
                 writerName: name,
                 count: 0
             });
 
-            // Fetch subscriber emails
+            // Fetch all subscribers
             const subscribers = await subscriberModel.find({}, 'email');
 
             if (subscribers.length > 0) {
-                const subject = `📰 New News Published: ${cleanTitle}`;
+                // Prepare email content
+                const subject = `📰 New News Published: ${title[0].trim()}`;
+                // const newsLink = `https://www.topbriefing.in/`;
                 const message = `
-                <h2>${cleanTitle}</h2>
-                <p>${cleanDescription.slice(0, 150)}...</p>
-                <a href="https://www.topbriefing.in/"
+                <h2>${title[0].trim()}</h2>
+                <p>${description[0]?.trim()?.slice(0, 150)}...</p>
+                <a href="https://www.topbriefing.in/" 
                     style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
                     Read Full Article
                 </a>
@@ -240,15 +148,16 @@ class newsController {
                 <small>Published by ${name} on ${moment().format('LL')}</small>
             `;
 
+                // Send emails in background (not blocking response)
                 subscribers.forEach(sub => {
                     sendMail(sub.email, subject, message).catch(err =>
-                        console.error(`Failed to send email to ${sub.email}:`, err)
+                        console.error(`Failed to send mail to ${sub.email}:`, err)
                     );
                 });
             }
 
             return res.status(200).json({
-                message: 'News added successfully',
+                message: 'News added successfully and notifications sent to subscribers.',
                 news
             });
 
@@ -257,7 +166,6 @@ class newsController {
             return res.status(500).json({ message: 'Internal server error' });
         }
     };
-
 
 
     update_news = async (req, res) => {
@@ -461,36 +369,6 @@ class newsController {
             return res.status(500).json({ message: 'internal server error' })
         }
     }
-
-
-
-    get_news_title = async (req, res) => {
-        const { title } = req.params
-        try {
-            const news = await newsModel.findOneAndUpdate({ title }, { $inc: { count: 1 } }, { new: true })
-
-            const relatedNews = await newsModel.find({
-                $and: [
-                    {
-                        title: { $ne: title }
-                    },
-                    {
-                        category: {
-                            $eq: news.category
-                        }
-                    }
-                ]
-            }).limit(5).sort({ createdAt: -1 })
-
-            return res.status(200).json({ news: news ? news : {}, relatedNews })
-
-        } catch (error) {
-            console.log(error.message)
-            return res.status(500).json({ message: 'internal server error' })
-        }
-    }
-
-
 
     get_categories = async (req, res) => {
         try {
