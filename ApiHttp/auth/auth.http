@@ -1,0 +1,46 @@
+@url = http://localhost:5000
+
+
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ0ZjEwN2EzZTdjZDg4Nzk5Y2JhNTEiLCJlbWFpbCI6ImRheWFsbWFkaHVzdWRhbjc1QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2NjE1MDAxMCwiZXhwIjoxNzY2MTUwOTEwfQ.lvAMMJ-k7BWcXh88pKhTfIOVnLY27v8O7x9DqiBDX48
+############################################
+### ADD BLOCKCHAIN (Requires Token)
+############################################
+
+### register
+POST {{url}}/api/v1/auth/register HTTP/1.1
+Content-type: application/json
+
+
+{
+    "email": "user@example.com",
+    "username": "john_doe",
+    "password": "Strong@Pass123",
+    "firstName": "John",
+    "lastName": "Doe",
+    "phone": "+919876543210"
+}
+#######################
+
+####loging user
+POST {{url}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+    "email": "superadmin",
+    "password": "Admin@123456",
+    "rememberMe": true
+}
+####################
+
+####roll update
+POST {{url}}/api/v1/auth/admin/users/roleupdate
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+{
+    "userId": "6945527f641ee9296747aa8b",
+    "roleId": "6944f106a3e7cd88799cba31"
+}
+
+
+####################
