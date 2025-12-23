@@ -92,6 +92,8 @@ router.use(RoleMiddleware.isSuperAdmin);
 
 router.get('/admin/users', AuthController.getAllUsers);
 
+router.get('/admin/all/roles', AuthController.getAllRoles);
+
 router.post('/admin/users/roleupdate',
     [
         param('userId').isMongoId(),

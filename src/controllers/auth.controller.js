@@ -2,6 +2,7 @@ const User = require('../models/User.model');
 const Role = require('../models/Role.model');
 const TokenUtils = require('../utils/token.utils');
 const PasswordUtils = require('../utils/password.utils');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 const crypto = require('crypto');
 
 class AuthController {
@@ -18,8 +19,8 @@ class AuthController {
             if (existingUser) {
                 return res.status(400).json({
                     success: false,
-                    message: existingUser.email === email ? 
-                        'Email already registered' : 
+                    message: existingUser.email === email ?
+                        'Email already registered' :
                         'Username already taken'
                 });
             }
@@ -68,7 +69,7 @@ class AuthController {
             user.lockUntil = undefined;
 
             // TODO: Send verification email
-            // await sendVerificationEmail(user.email, user.emailVerificationToken);
+            await sendVerificationEmail(user.email, user.emailVerificationToken);
 
             res.status(201).json({
                 success: true,
@@ -127,14 +128,22 @@ class AuthController {
                 });
             }
 
+            // check if email is verified
+            if (!user.isEmailVerified) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Please verify your email to login'
+                });
+            }
+
             // 5. Check password
             const isPasswordCorrect = await user.comparePassword(password);
             if (!isPasswordCorrect) {
                 // Increment login attempts
                 await user.incrementLoginAttempts();
-                
+
                 const attemptsLeft = (process.env.MAX_LOGIN_ATTEMPTS || 5) - (user.loginAttempts + 1);
-                
+
                 return res.status(401).json({
                     success: false,
                     message: `Invalid credentials. ${attemptsLeft > 0 ? `${attemptsLeft} attempts left` : 'Account locked'}`
@@ -190,9 +199,9 @@ class AuthController {
         try {
             // Clear refresh token cookie
             res.clearCookie('refreshToken');
-            
+
             // Invalidate token (you might want to implement a token blacklist)
-            
+
             res.status(200).json({
                 success: true,
                 message: 'Logged out successfully'
@@ -209,7 +218,7 @@ class AuthController {
     static async refreshToken(req, res) {
         try {
             const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
-            
+
             if (!refreshToken) {
                 return res.status(401).json({
                     success: false,
@@ -219,7 +228,7 @@ class AuthController {
 
             // Verify refresh token
             const decoded = TokenUtils.verifyRefreshToken(refreshToken);
-            
+
             // Find user
             const user = await User.findById(decoded.userId);
             if (!user || !user.isActive || user.isSuspended) {
@@ -251,7 +260,6 @@ class AuthController {
     static async verifyEmail(req, res) {
         try {
             const { token } = req.query;
-
             if (!token) {
                 return res.status(400).json({
                     success: false,
@@ -294,6 +302,7 @@ class AuthController {
     static async forgotPassword(req, res) {
         try {
             const { email } = req.body;
+            console.log('Forgot ', email);
 
             const user = await User.findOne({ email });
             if (!user) {
@@ -306,15 +315,15 @@ class AuthController {
 
             // Generate reset token
             const resetToken = TokenUtils.generatePasswordResetToken();
-            
+
             // Set token and expiry
             user.passwordResetToken = resetToken;
             user.passwordResetExpires = Date.now() + 1 * 60 * 60 * 1000; // 1 hour
             await user.save();
 
             // TODO: Send password reset email
-            // const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
-            // await sendPasswordResetEmail(user.email, resetUrl);
+            const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+            await sendPasswordResetEmail(user.email, resetUrl);
 
             res.status(200).json({
                 success: true,
@@ -381,9 +390,9 @@ class AuthController {
     static async changePassword(req, res) {
         try {
             const { currentPassword, newPassword } = req.body;
-
+            const user = await User.findById(req.user.id).select("+password");
             // Check current password
-            const isMatch = await req.user.comparePassword(currentPassword);
+            const isMatch = await user.comparePassword(currentPassword);
             if (!isMatch) {
                 return res.status(400).json({
                     success: false,
@@ -442,7 +451,7 @@ class AuthController {
     static async updateProfile(req, res) {
         try {
             const updates = req.body;
-            
+
             // Remove fields that shouldn't be updated directly
             delete updates.password;
             delete updates.email;
@@ -516,7 +525,7 @@ class AuthController {
             }
 
             const user = await User.findOne({ username });
-            
+
             res.status(200).json({
                 success: true,
                 data: {
@@ -601,8 +610,8 @@ class AuthController {
             }
 
             // Check if user already has this role for this outlet
-            const existingRole = user.roles.find(r => 
-                r.role.toString() === roleId 
+            const existingRole = user.roles.find(r =>
+                r.role.toString() === roleId
             );
 
             if (existingRole) {
@@ -613,12 +622,12 @@ class AuthController {
             }
 
             // Add new role
-            // user.roles.push({
-            //     role: role._id,
-            //     // outlet: outletId || null,
-            //     assignedAt: Date.now(),
-            //     assignedBy: req.user._id
-            // });
+            user.roles.push({
+                role: role._id,
+                // outlet: outletId || null,
+                assignedAt: Date.now(),
+                assignedBy: req.user._id
+            });
 
             await user.save();
 
@@ -630,6 +639,122 @@ class AuthController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to update user role'
+            });
+        }
+    }
+
+    // Admin: Get all roles
+    static async getAllRoles(req, res) {
+        try {
+            const roles = await Role.find().select('-__v');
+
+            res.status(200).json({
+                success: true,
+                data: { roles }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch roles'
+            });
+        }
+    }
+
+    // Admin: Create new role
+    static async createRole(req, res) {
+        try {
+            const { name, level, description } = req.body;
+
+            // Check if role already exists
+            const existingRole = await Role.findOne({ name });
+            if (existingRole) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Role already exists'
+                });
+            }
+
+            // Create new role
+            const role = await Role.create({ name, level, description });
+
+            res.status(201).json({
+                success: true,
+                message: 'Role created successfully',
+                data: { role }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create role'
+            });
+        }
+    }
+
+    // Admin: Update role
+    static async updateRole(req, res) {
+        try {
+            const { roleId, name, level, description } = req.body;
+
+            const role = await Role.findById(roleId);
+            if (!role) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Role not found'
+                });
+            }
+
+            // Update role details
+            role.name = name || role.name;
+            role.level = level || role.level;
+            role.description = description || role.description;
+
+            await role.save();
+
+            res.status(200).json({
+                success: true,
+                message: 'Role updated successfully',
+                data: { role }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update role'
+            });
+        }
+    }
+
+    // Admin: Delete role
+    static async deleteRole(req, res) {
+        try {
+            const { roleId } = req.body;
+
+            const role = await Role.findById(roleId);
+            if (!role) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Role not found'
+                });
+            }
+
+            // Check if role is assigned to any user
+            const usersWithRole = await User.countDocuments({ 'roles.role': roleId });
+            if (usersWithRole > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot delete role assigned to users'
+                });
+            }
+
+            await role.remove();
+
+            res.status(200).json({
+                success: true,
+                message: 'Role deleted successfully'
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete role'
             });
         }
     }

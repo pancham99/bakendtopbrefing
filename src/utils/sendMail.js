@@ -9,11 +9,15 @@ const transporter = nodemailer.createTransport({
     user: "topbriefing36@gmail.com",
     pass: 'zxbc nnod mmtb kdjg',
   },
+  tls: {
+    // Do not fail on invalid certificates
+    rejectUnauthorized: false
+  }
 });
 
 module.exports = async (to, subject, html) => {
   await transporter.sendMail({
-    from: `"Topbriefing latest news" <${process.env.SMTP_USER}>`,
+    from: `"topbriefing36@gmail.com`,
     to,
     subject,
     html,

@@ -1,7 +1,7 @@
 @url = http://localhost:5000
 
 
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ0ZjEwN2EzZTdjZDg4Nzk5Y2JhNTEiLCJlbWFpbCI6ImRheWFsbWFkaHVzdWRhbjc1QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2NjE1MDAxMCwiZXhwIjoxNzY2MTUwOTEwfQ.lvAMMJ-k7BWcXh88pKhTfIOVnLY27v8O7x9DqiBDX48
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ1YTU3NGFhZjI1NmM4MzFhOTA5NjYiLCJlbWFpbCI6ImRheWFsbWFkaHVzdWRhbjc1QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2NjUwOTc0NywiZXhwIjoxNzY2NTEwNjQ3fQ.GOMNnzfYovXp1hVWeqWvn0idASabJCCxi8L3FslTsc4
 ############################################
 ### ADD BLOCKCHAIN (Requires Token)
 ############################################
@@ -12,11 +12,11 @@ Content-type: application/json
 
 
 {
-    "email": "user@example.com",
-    "username": "john_doe",
+    "email": "topbreifing@gmail.com",
+    "username": "jag",
     "password": "Strong@Pass123",
-    "firstName": "John",
-    "lastName": "Doe",
+    "firstName": "jagriti",
+    "lastName": "mishra",
     "phone": "+919876543210"
 }
 #######################
@@ -26,7 +26,7 @@ POST {{url}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-    "email": "superadmin",
+    "email": "dayalmadhusudan75@gmail.com",
     "password": "Admin@123456",
     "rememberMe": true
 }
@@ -42,5 +42,69 @@ Authorization: Bearer {{token}}
     "roleId": "6944f106a3e7cd88799cba31"
 }
 
-
 ####################
+GET {{url}}/api/v1/auth/verify-email?token=a4761d300efadd6be5614d24cf7b694938ebbbb64ae6ac5f74612a31b2b5f17c
+
+Content-Type: application/json
+
+#########################
+// Forgot Password
+##########################
+
+POST {{url}}/api/v1/auth/forgot-password
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+{
+    "email": "topbreifing@gmail.com"
+}
+
+######################
+// reset Password
+##########################
+
+POST {{url}}/api/v1/auth/reset-password
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+{
+    "token": "8ef611e786325bb5e6278e22c6d765aef210a3aff0901448661f85536e98a99f",
+    "newPassword": "NewStrong@Pass123"
+}
+###############################
+//changes Password
+###############################
+
+POST {{url}}/api/v1/auth/change-password
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+{
+    "currentPassword": "NewStrong@Pass123",
+    "newPassword": "NewStrong@Pass1235"
+}
+######################
+// GET profile
+#####################
+
+GET {{url}}/api/v1/auth/profile
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+######################
+// GET ADMIN ALL USERS
+#####################
+
+GET {{url}}/api/v1/auth/admin/users
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+######################
+//get all roles
+#####################
+
+GET {{url}}/api/v1/auth/admin/all/roles
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+######################
