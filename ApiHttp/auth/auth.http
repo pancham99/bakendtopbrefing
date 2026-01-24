@@ -1,7 +1,7 @@
 @url = http://localhost:5000
 
 
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ1YTU3NGFhZjI1NmM4MzFhOTA5NjYiLCJlbWFpbCI6ImRheWFsbWFkaHVzdWRhbjc1QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2NjUwOTc0NywiZXhwIjoxNzY2NTEwNjQ3fQ.GOMNnzfYovXp1hVWeqWvn0idASabJCCxi8L3FslTsc4
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTU2ZjYxYzI3N2QxZTcwOGZjM2JlOTIiLCJpYXQiOjE3NjczMDY3ODEsImV4cCI6MTc2NzkxMTU4MX0.9W-J5R4kQ6w9XEJ0_qSgybwXx7k6YqOCMMm2KUBVl_8
 ############################################
 ### ADD BLOCKCHAIN (Requires Token)
 ############################################
@@ -10,13 +10,10 @@
 POST {{url}}/api/v1/auth/register HTTP/1.1
 Content-type: application/json
 
-
 {
     "email": "topbreifing@gmail.com",
-    "username": "jag",
+    "username": "topbreifing",
     "password": "Strong@Pass123",
-    "firstName": "jagriti",
-    "lastName": "mishra",
     "phone": "+919876543210"
 }
 #######################
@@ -26,8 +23,8 @@ POST {{url}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-    "email": "dayalmadhusudan75@gmail.com",
-    "password": "Admin@123456",
+    "email": "jagritimishra1110@gmail.com",
+    "password": "Strong@Pass123",
     "rememberMe": true
 }
 ####################
