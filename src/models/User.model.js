@@ -64,8 +64,8 @@ const userSchema = new mongoose.Schema({
     timezone: String,
     language: {
         type: String,
-        default: 'en',
-        enum: ['en', 'hi', 'es', 'fr', 'de', 'zh']
+        default: 'english',
+        enum: ['english', 'hindi', 'bengali', 'marathi', 'telugu', 'tamil', 'urdu', 'gujarati', 'kannada', 'malayalam', 'odia', 'punjabi', 'assamese'   ]
     },
     
     // Authentication & Security
@@ -408,6 +408,26 @@ userSchema.statics.findByEmailOrUsername = function(identifier) {
         ]
     }).select('+password +loginAttempts +lockUntil');
 };
+
+
+userSchema.methods.getLoginStats = function () {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const last = this.loginHistory.at(-1);
+
+  return {
+    totalLogins: this.loginHistory.length,
+    todayLogins: this.loginHistory.filter(
+      l => l.loginAt >= today && l.success
+    ).length,
+    lastLogin: this.lastLogin,
+    lastLoginIP: last?.ip,
+    lastLoginDevice: last?.userAgent,
+    lastLoginLocation: last?.location
+  };
+};
+
 
 const User = mongoose.model('User', userSchema);
 

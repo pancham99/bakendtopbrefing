@@ -69,16 +69,16 @@ router.post('/change-password',
 
 router.get('/profile', AuthController.getProfile);
 
-router.put('/profile',
-    [
-        body('firstName').optional().trim().notEmpty(),
-        body('lastName').optional().trim().notEmpty(),
-        body('phone').optional().matches(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/),
-        body('bio').optional().trim(),
-        body('country').optional().trim(),
-        body('city').optional().trim(),
-        body('language').optional().isIn(['en', 'hi', 'es', 'fr', 'de', 'zh'])
-    ],
+router.put('/updateprofile',
+    // [
+    //     body('firstName').optional().trim().notEmpty(),
+    //     body('lastName').optional().trim().notEmpty(),
+    //     body('phone').optional().matches(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/),
+    //     body('bio').optional().trim(),
+    //     body('country').optional().trim(),
+    //     body('city').optional().trim(),
+    //     body('language').optional().isIn(['en', 'hi', 'es', 'fr', 'de', 'zh'])
+    // ],
     AuthController.updateProfile
 );
 
@@ -87,8 +87,19 @@ router.delete('/account',
     AuthController.deleteAccount
 );
 
+// 🔐 AUTH REQUIRED
+router.use(AuthMiddleware.protect);
+
+// 🔐 SUPER ADMIN ONLY
+router.use(RoleMiddleware.isSuperAdmin);
+
+// ✅ ADMIN: get any user details
+router.get('/users/:userId', AuthController.getUserDetails);
 // Admin Routes
 router.use(RoleMiddleware.isSuperAdmin);
+
+// getuserdetails
+
 
 router.get('/admin/users', AuthController.getAllUsers);
 

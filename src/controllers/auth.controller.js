@@ -4,6 +4,8 @@ const TokenUtils = require('../utils/token.utils');
 const PasswordUtils = require('../utils/password.utils');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 const crypto = require('crypto');
+const geoip = require('geoip-lite');
+
 
 class AuthController {
     // Register User
@@ -90,11 +92,116 @@ class AuthController {
     }
 
     // Login User
+    // static async login(req, res) {
+    //     try {
+    //         const { email, password, rememberMe } = req.body;
+
+    //         // 1. Check if email/username and password exist
+    //         if (!email || !password) {
+    //             return res.status(400).json({
+    //                 success: false,
+    //                 message: 'Please provide email/username and password'
+    //             });
+    //         }
+
+    //         // 2. Find user
+    //         const user = await User.findByEmailOrUsername(email);
+    //         if (!user) {
+    //             return res.status(401).json({
+    //                 success: false,
+    //                 message: 'Invalid credentials'
+    //             });
+    //         }
+
+    //         // 3. Check if account is locked
+    //         if (user.isLocked) {
+    //             const remainingTime = Math.ceil((user.lockUntil - Date.now()) / 1000 / 60);
+    //             return res.status(429).json({
+    //                 success: false,
+    //                 message: `Account is locked. Try again in ${remainingTime} minutes`
+    //             });
+    //         }
+
+    //         // 4. Check if account is active
+    //         if (!user.isActive) {
+    //             return res.status(401).json({
+    //                 success: false,
+    //                 message: 'Your account is deactivated'
+    //             });
+    //         }
+
+    //         // check if email is verified
+    //         if (!user.isEmailVerified) {
+    //             return res.status(401).json({
+    //                 success: false,
+    //                 message: 'Please verify your email to login'
+    //             });
+    //         }
+
+    //         // 5. Check password
+    //         const isPasswordCorrect = await user.comparePassword(password);
+    //         if (!isPasswordCorrect) {
+    //             // Increment login attempts
+    //             await user.incrementLoginAttempts();
+
+    //             const attemptsLeft = (process.env.MAX_LOGIN_ATTEMPTS || 5) - (user.loginAttempts + 1);
+
+    //             return res.status(401).json({
+    //                 success: false,
+    //                 message: `Invalid credentials. ${attemptsLeft > 0 ? `${attemptsLeft} attempts left` : 'Account locked'}`
+    //             });
+    //         }
+
+    //         // 6. Reset login attempts
+    //         await user.resetLoginAttempts();
+
+    //         // 7. Update last login
+    //         user.lastLogin = Date.now();
+    //         await user.save();
+
+    //         // 8. Generate tokens
+    //         const tokens = user.generateAuthTokens();
+
+    //         // 9. Remove sensitive data
+    //         user.password = undefined;
+    //         user.loginAttempts = undefined;
+    //         user.lockUntil = undefined;
+
+    //         // 10. Set refresh token in cookie if rememberMe is true
+    //         if (rememberMe) {
+    //             res.cookie('refreshToken', tokens.refreshToken, {
+    //                 httpOnly: true,
+    //                 secure: process.env.NODE_ENV === 'production',
+    //                 sameSite: 'strict',
+    //                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    //             });
+    //         }
+
+    //         res.status(200).json({
+    //             success: true,
+    //             message: 'Login successful',
+    //             data: {
+    //                 user,
+    //                 accessToken: tokens.accessToken,
+    //                 refreshToken: rememberMe ? undefined : tokens.refreshToken
+    //             }
+    //         });
+    //     } catch (error) {
+    //         console.error('Login error:', error);
+    //         res.status(500).json({
+    //             success: false,
+    //             message: 'Login failed',
+    //             error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    //         });
+    //     }
+    // }
+
+    // update login method is in auth.middleware.js
+
     static async login(req, res) {
         try {
             const { email, password, rememberMe } = req.body;
 
-            // 1. Check if email/username and password exist
             if (!email || !password) {
                 return res.status(400).json({
                     success: false,
@@ -102,7 +209,6 @@ class AuthController {
                 });
             }
 
-            // 2. Find user
             const user = await User.findByEmailOrUsername(email);
             if (!user) {
                 return res.status(401).json({
@@ -111,7 +217,6 @@ class AuthController {
                 });
             }
 
-            // 3. Check if account is locked
             if (user.isLocked) {
                 const remainingTime = Math.ceil((user.lockUntil - Date.now()) / 1000 / 60);
                 return res.status(429).json({
@@ -120,7 +225,6 @@ class AuthController {
                 });
             }
 
-            // 4. Check if account is active
             if (!user.isActive) {
                 return res.status(401).json({
                     success: false,
@@ -128,50 +232,72 @@ class AuthController {
                 });
             }
 
-            // check if email is verified
-            if (!user.isEmailVerified) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Please verify your email to login'
-                });
-            }
+            // if (!user.isEmailVerified) {
+            //     return res.status(401).json({
+            //         success: false,
+            //         message: 'Please verify your email to login'
+            //     });
+            // }
 
-            // 5. Check password
             const isPasswordCorrect = await user.comparePassword(password);
             if (!isPasswordCorrect) {
-                // Increment login attempts
                 await user.incrementLoginAttempts();
 
-                const attemptsLeft = (process.env.MAX_LOGIN_ATTEMPTS || 5) - (user.loginAttempts + 1);
+                const attemptsLeft =
+                    (process.env.MAX_LOGIN_ATTEMPTS || 5) - (user.loginAttempts + 1);
 
                 return res.status(401).json({
                     success: false,
-                    message: `Invalid credentials. ${attemptsLeft > 0 ? `${attemptsLeft} attempts left` : 'Account locked'}`
+                    message: `Invalid credentials. ${attemptsLeft > 0 ? `${attemptsLeft} attempts left` : 'Account locked'
+                        }`
                 });
             }
 
-            // 6. Reset login attempts
+            // ✅ Reset attempts
             await user.resetLoginAttempts();
 
-            // 7. Update last login
-            user.lastLogin = Date.now();
+            // ===============================
+            // 🔥 LOGIN TRACKING STARTS HERE
+            // ===============================
+
+            const ip =
+                req.headers['x-forwarded-for']?.split(',')[0] ||
+                req.socket.remoteAddress;
+
+            const geo = geoip.lookup(ip);
+
+            user.lastLogin = new Date();
+
+            user.loginHistory.push({
+                ip,
+                userAgent: req.headers['user-agent'],
+                location: geo ? `${geo.city || ''}, ${geo.country}` : 'Unknown',
+                success: true
+            });
+
+            // 🔒 Limit login history to last 20
+            if (user.loginHistory.length > 20) {
+                user.loginHistory = user.loginHistory.slice(-20);
+            }
+
             await user.save();
 
-            // 8. Generate tokens
+            // ===============================
+            // 🔥 LOGIN TRACKING ENDS HERE
+            // ===============================
+
             const tokens = user.generateAuthTokens();
 
-            // 9. Remove sensitive data
             user.password = undefined;
             user.loginAttempts = undefined;
             user.lockUntil = undefined;
 
-            // 10. Set refresh token in cookie if rememberMe is true
             if (rememberMe) {
                 res.cookie('refreshToken', tokens.refreshToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'strict',
-                    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+                    maxAge: 7 * 24 * 60 * 60 * 1000
                 });
             }
 
@@ -188,11 +314,12 @@ class AuthController {
             console.error('Login error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Login failed',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+                message: 'Login failed'
             });
         }
     }
+
+
 
     // Logout User
     static async logout(req, res) {
@@ -302,11 +429,8 @@ class AuthController {
     static async forgotPassword(req, res) {
         try {
             const { email } = req.body;
-            console.log('Forgot ', email);
-
             const user = await User.findOne({ email });
             if (!user) {
-                // Don't reveal that user doesn't exist
                 return res.status(200).json({
                     success: true,
                     message: 'If email exists, password reset instructions will be sent'
@@ -660,6 +784,30 @@ class AuthController {
         }
     }
 
+    // updateProfile complete details after registr rest detils
+
+    static async completeProfile(req, res) {
+        try {
+            const updates = req.body;
+            // Update user
+            const user = await User.findByIdAndUpdate(
+                req.user._id,
+                updates,
+                { new: true, runValidators: true }
+            ).select('-password -loginAttempts -lockUntil -twoFactorSecret');
+            res.status(200).json({
+                success: true,
+                message: 'Profile completed successfully',
+                data: { user }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: 'Profile completion failed'
+            });
+        }
+    }
+
     // Admin: Create new role
     static async createRole(req, res) {
         try {
@@ -758,6 +906,38 @@ class AuthController {
             });
         }
     }
+
+    // getuserdetails
+// Admin: get any user details by ID
+static async getUserDetails(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId)
+      .populate('roles.role', 'name permissions level')
+      .select('-password -loginAttempts -lockUntil -twoFactorSecret');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { user },   // ✅ only this user
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get user details',
+    });
+  }
+}
+
+
+
 }
 
 module.exports = AuthController;

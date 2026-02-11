@@ -1,7 +1,7 @@
 @url = http://localhost:5000
 
 
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTU2ZjYxYzI3N2QxZTcwOGZjM2JlOTIiLCJpYXQiOjE3NjczMDY3ODEsImV4cCI6MTc2NzkxMTU4MX0.9W-J5R4kQ6w9XEJ0_qSgybwXx7k6YqOCMMm2KUBVl_8
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTQ1YTU3NGFhZjI1NmM4MzFhOTA5NjYiLCJlbWFpbCI6ImRheWFsbWFkaHVzdWRhbjc1QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2OTc0NjQzNiwiZXhwIjoxNzY5ODMyODM2fQ.IAaEX26C04CQVxSMjfhqGrM9QPyG0BaeoUuSoKFdzys
 ############################################
 ### ADD BLOCKCHAIN (Requires Token)
 ############################################
@@ -12,7 +12,7 @@ Content-type: application/json
 
 {
     "email": "topbreifing@gmail.com",
-    "username": "topbreifing",
+    "username": "topbreifingadmin",
     "password": "Strong@Pass123",
     "phone": "+919876543210"
 }
@@ -23,11 +23,17 @@ POST {{url}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-    "email": "jagritimishra1110@gmail.com",
-    "password": "Strong@Pass123",
+    "email": "topbreifing@gmail.com",
+    "password": "NewStrong@Pass124",
     "rememberMe": true
 }
 ####################
+
+
+##########logot###############
+POST {{url}}/api/v1/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 ####roll update
 POST {{url}}/api/v1/auth/admin/users/roleupdate
@@ -65,8 +71,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}} 
 
 {
-    "token": "8ef611e786325bb5e6278e22c6d765aef210a3aff0901448661f85536e98a99f",
-    "newPassword": "NewStrong@Pass123"
+    "token": "30c491c4713598f2b8e9bb4bcfa8aaea8542a7194d1e66f802e7738421a96546",
+    "newPassword": "NewStrong@Pass124"
 }
 ###############################
 //changes Password
@@ -103,5 +109,41 @@ Authorization: Bearer {{token}}
 GET {{url}}/api/v1/auth/admin/all/roles
 Content-Type: application/json
 Authorization: Bearer {{token}} 
+
+#updateProfile#############
+### update profile
+######################
+
+
+#######getuserdetails#############
+GET {{url}}/api/v1/auth/users/697866ef20eeebd93c0e9efb
+Content-Type: application/json
+Authorization: Bearer {{token}}
+######################
+
+
+
+### update profile
+
+
+PUT {{url}}/api/v1/auth/updateprofile
+Content-Type: application/json
+Authorization: Bearer {{token}} 
+
+{
+  "firstName": "Madhusudan",
+  "lastName": "Dayal",
+  "phone": "+919876543210",
+  "bio": "I am admin of topbriefing",
+  "dateOfBirth": "1990-01-01",
+  "gender": "male",
+  "country": "India",
+  "city": "New Delhi",
+  "language": "hindi",
+  "socialProfiles": {
+    "facebook": "https://facebook.com/madhusudan.dayal",
+    "twitter": "https://twitter.com/madhusudan_dayal"
+  }
+}
 
 ######################
