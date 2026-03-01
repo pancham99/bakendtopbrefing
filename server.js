@@ -51,9 +51,6 @@ app.use('/', commentRoutes); // Uncomment if you have comment routes
 app.use('/', subscribeRouters);
 app.use('/', videoYoutubeRouters);
 
-
-
-// ─── Database Connection ──────────────────────────────────
 db_connect();
 
 // ─── Export App (for Vercel or other platforms) ───────────
