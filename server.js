@@ -15,6 +15,7 @@ const advertisementRoutes = require('./routes/advertisementRouters');
 const userRoutes = require('./routes/userRouters'); 
 const commentRoutes = require('./routes/commentRouters'); // Uncomment if you have comment routes
 const subscribeRouters = require('./routes/subscribeRouters');
+const videoYoutubeRouters = require('./routes/videoYoutubeRouters');
 
 
 
@@ -47,7 +48,8 @@ app.use('/', videoRoutes);
 app.use('/', advertisementRoutes);
 app.use('/', userRoutes); // Uncomment if you have user routes
 app.use('/', commentRoutes); // Uncomment if you have comment routes
-app.use('/', subscribeRouters)
+app.use('/', subscribeRouters);
+app.use('/', videoYoutubeRouters);
 
 
 
