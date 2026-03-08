@@ -264,20 +264,65 @@ class newsController {
 
     }
 
+    // get_dashboard_news = async (req, res) => {
+    //     const { id, role } = req.userInfo
+
+    //     try {
+    //         if (role === 'admin') {
+    //             const news = await newsModel.find({}).sort({ createdAt: -1 })
+    //             return res.status(201).json({ news })
+    //         } else {
+    //             const news = await newsModel.find({ writerId: new ObjectId(id) }).sort({ createdAt: -1 })
+    //             return res.status(201).json({ news })
+    //         }
+    //     } catch (error) {
+    //         console.log(error.message)
+    //         return res.status(500).json({ message: 'internal server error' })
+    //     }
+    // }
+
+
     get_dashboard_news = async (req, res) => {
+
         const { id, role } = req.userInfo
 
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 20
+
+        const skip = (page - 1) * limit
+
+        const start = Date.now()
+
         try {
-            if (role === 'admin') {
-                const news = await newsModel.find({}).sort({ createdAt: -1 })
-                return res.status(201).json({ news })
-            } else {
-                const news = await newsModel.find({ writerId: new ObjectId(id) }).sort({ createdAt: -1 })
-                return res.status(201).json({ news })
+
+            let query = {}
+
+            if (role !== "admin") {
+                query.writerId = id
             }
+
+            const news = await newsModel
+                .find(query)
+                .select("title image category status createdAt date")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+
+            const total = await newsModel.countDocuments(query)
+
+            console.log("QUERY TIME:", Date.now() - start, "ms")
+
+            res.status(200).json({
+                news,
+                total,
+                page,
+                pages: Math.ceil(total / limit)
+            })
+
         } catch (error) {
-            console.log(error.message)
-            return res.status(500).json({ message: 'internal server error' })
+            console.log(error)
+            res.status(500).json({ message: "server error" })
         }
     }
 
