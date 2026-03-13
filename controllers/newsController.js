@@ -5,9 +5,11 @@ const authModel = require('../models/authModel');
 const galleryModel = require('../models/galleryModel');
 const subscriberModel = require('../models/subscriberModel'); // model for subscribers (email list)
 const sendMail = require('../utils/sendMail'); // utility function to send emails
+const userModel = require('../models/userModel');
 const { mongo: { ObjectId } } = require('mongoose');
 
 const moment = require('moment');
+
 
 
 class newsController {
@@ -325,6 +327,56 @@ class newsController {
             res.status(500).json({ message: "server error" })
         }
     }
+
+
+    get_dashboard_stats = async (req, res) => {
+
+        try {
+
+            const totalNews = await newsModel.countDocuments()
+
+            const activeNews = await newsModel.countDocuments({ status: "active" })
+
+            const pendingNews = await newsModel.countDocuments({ status: "pending" })
+
+            const deactiveNews = await newsModel.countDocuments({ status: "deactive" })
+
+            const totalWriter = await authModel.countDocuments({ role: "writer" })
+
+            const activeWriter = await authModel.countDocuments({
+                role: "writer",
+                status: "active"
+            })
+
+            const deactiveWriter = await authModel.countDocuments({
+                role: "writer",
+                status: "deactive"
+            })
+
+            console.log(totalNews)
+
+            res.status(200).json({
+                totalNews,
+                activeNews,
+                pendingNews,
+                deactiveNews,
+                totalWriter,
+                activeWriter,
+                deactiveWriter
+            })
+
+        } catch (error) {
+
+            console.log(error)
+
+            res.status(500).json({
+                message: "server error"
+            })
+
+        }
+
+    }
+
 
     get_dashboard_single_news = async (req, res) => {
         const { news_id } = req.params
