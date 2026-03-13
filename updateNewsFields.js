@@ -41,6 +41,36 @@
 
 
 
+const mongoose = require("mongoose")
+const newsModel = require("./models/newsModel")
+
+mongoose.connect("mongodb+srv://pancham047:vVs7jQEifTMefzyc@cluster0.o5koy.mongodb.net/")
+
+async function updateOldDocuments(){
+
+  const result = await newsModel.updateMany(
+    {},
+    {
+      $set: {
+        isBreaking: false,
+        isTrending: false,
+        isPopular: false,
+        isFeatured: false,
+        views: 0,
+        priority: 0
+      }
+    }
+  )
+
+  console.log("Updated Documents:", result.modifiedCount)
+
+  mongoose.disconnect()
+}
+
+updateOldDocuments()
+
+
+
 
 
 // mongoose.connect('mongodb+srv://pancham047:vVs7jQEifTMefzyc@cluster0.o5koy.mongodb.net/')

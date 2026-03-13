@@ -5,93 +5,11 @@ const authModel = require('../models/authModel');
 const galleryModel = require('../models/galleryModel');
 const subscriberModel = require('../models/subscriberModel'); // model for subscribers (email list)
 const sendMail = require('../utils/sendMail'); // utility function to send emails
+const userModel = require('../models/userModel');
 const { mongo: { ObjectId } } = require('mongoose');
 
 const moment = require('moment');
-
-
 class newsController {
-    // add_news = async (req, res) => {
-    //     const { id, category, name } = req.userInfo
-
-    //     const form = formidable({})
-    //     cloudinary.config({
-    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
-    //         api_key: process.env.CLODINARY_API_KEY,
-    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
-    //         secure: true
-    //     })
-
-    //     try {
-    //         const [fields, files] = await form.parse(req)
-
-    //         const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' })
-    //         const { title, description, state } = fields
-    //         const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-    //         const news = await newsModel.create({
-    //             writerId: id,
-    //             title: title[0].trim(),
-    //             slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
-    //             category: finalCategory,
-    //             state: state[0].trim(),
-    //             description: description[0],
-    //             image: url,
-    //             date: moment().format('LL'),
-    //             writerName: name,
-    //             count: 0
-    //         })
-
-    //         console.log(news)
-
-    //         return res.status(200).json({ message: 'news added successfully', news })
-
-    //     } catch (error) {
-    //         return res.status(500).json({ message: 'internal server error' })
-    //     }
-    // }
-
-    // add_news = async (req, res) => {
-    //     const { id, category, name } = req.userInfo;
-
-    //     const form = formidable({});
-    //     cloudinary.config({
-    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
-    //         api_key: process.env.CLODINARY_API_KEY,
-    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
-    //         secure: true
-    //     });
-
-    //     try {
-    //         const [fields, files] = await form.parse(req);
-    //         const { url } = await cloudinary.uploader.upload(files.image[0].filepath, { folder: 'news_images' });
-
-    //         const { title, description, state } = fields;
-
-    //         // logic: state दिया तो category null कर दो
-    //         const finalCategory = state && state[0]?.trim() !== "" ? null : category;
-
-    //         const news = await newsModel.create({
-    //             writerId: id,
-    //             title: title[0].trim(),
-    //             slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
-    //             category: finalCategory,
-    //             state: state[0]?.trim() || null,
-    //             description: description[0]?.trim() || null,
-    //             image: url,
-    //             date: moment().format('LL'),
-    //             writerName: name,
-    //             count: 0
-    //         });
-
-    //         return res.status(200).json({ message: 'news added successfully', news });
-
-    //     } catch (error) {
-    //         console.log(error);
-    //         return res.status(500).json({ message: 'internal server error' });
-    //     }
-    // }
-
-
 
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo;
@@ -221,6 +139,45 @@ class newsController {
 
     }
 
+
+    update_news_types = async (req, res) => {
+        const { role } = req.userInfo
+        const { news_id } = req.params
+        const { isBreaking, isFeatured, isTrending, isPopular } = req.body;
+
+        if (role === 'admin') {
+            const news = await newsModel.findByIdAndUpdate(news_id, { isBreaking, isFeatured, isTrending, isPopular }, { new: true })
+            return res.status(200).json({ message: 'news type update successfully', news })
+        } else {
+            return res.status(401).json({ message: 'you cannot access this api server error' })
+        }
+
+    }
+
+    get_breaking_news = async (req, res) => {
+        try {
+
+            const news = await newsModel.find({isBreaking: true, status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select("title slug image category date")
+                .lean();
+
+           
+
+            return res.status(200).json({ news });
+
+        } catch (error) {
+
+            return res.status(500).json({
+                message: "server error"
+            });
+
+        }
+    };
+
+
+
     get_images = async (req, res) => {
         const { id } = req.userInfo
 
@@ -263,24 +220,6 @@ class newsController {
         }
 
     }
-
-    // get_dashboard_news = async (req, res) => {
-    //     const { id, role } = req.userInfo
-
-    //     try {
-    //         if (role === 'admin') {
-    //             const news = await newsModel.find({}).sort({ createdAt: -1 })
-    //             return res.status(201).json({ news })
-    //         } else {
-    //             const news = await newsModel.find({ writerId: new ObjectId(id) }).sort({ createdAt: -1 })
-    //             return res.status(201).json({ news })
-    //         }
-    //     } catch (error) {
-    //         console.log(error.message)
-    //         return res.status(500).json({ message: 'internal server error' })
-    //     }
-    // }
-
 
     get_dashboard_news = async (req, res) => {
 
@@ -327,8 +266,7 @@ class newsController {
     }
 
 
-
-        get_dashboard_stats = async (req, res) => {
+    get_dashboard_stats = async (req, res) => {
 
         try {
 
@@ -376,6 +314,57 @@ class newsController {
 
     }
 
+
+
+
+    //     get_dashboard_stats = async (req, res) => {
+
+    //     try {
+
+    //         const totalNews = await newsModel.countDocuments()
+
+    //         const activeNews = await newsModel.countDocuments({ status: "active" })
+
+    //         const pendingNews = await newsModel.countDocuments({ status: "pending" })
+
+    //         const deactiveNews = await newsModel.countDocuments({ status: "deactive" })
+
+    //         const totalWriter = await authModel.countDocuments({ role: "writer" })
+
+    //         const activeWriter = await authModel.countDocuments({
+    //             role: "writer",
+    //             status: "active"
+    //         })
+
+    //         const deactiveWriter = await authModel.countDocuments({
+    //             role: "writer",
+    //             status: "deactive"
+    //         })
+
+    //         console.log(totalNews)
+
+    //         res.status(200).json({
+    //             totalNews,
+    //             activeNews,
+    //             pendingNews,
+    //             deactiveNews,
+    //             totalWriter,
+    //             activeWriter,
+    //             deactiveWriter
+    //         })
+
+    //     } catch (error) {
+
+    //         console.log(error)
+
+    //         res.status(500).json({
+    //             message: "server error"
+    //         })
+
+    //     }
+
+    // }
+
     get_dashboard_single_news = async (req, res) => {
         const { news_id } = req.params
 
@@ -390,80 +379,104 @@ class newsController {
     }
 
     get_all_news = async (req, res) => {
+        let cachedNews = null;
+        let cacheTime = 0;
         try {
-            const category_news = await newsModel.aggregate([
-                {
-                    $sort: { createdAt: -1 }
-                },
-                {
-                    $match: {
-                        status: 'active'
-                    }
-                },
-                {
-                    $group: {
-                        _id: '$category',
-                        news: {
-                            $push: {
-                                id: '$_id',
-                                title: '$title',
-                                slug: '$slug',
-                                writerName: '$writerName',
-                                image: '$image',
-                                description: '$description',
-                                date: '$date',
-                                category: '$category',
-                            }
-                        }
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        category: '$_id',
-                        news: {
-                            $slice: ['$news', 5]
-                        }
-                    }
-                }
-            ])
 
-            const news = {}
-            for (let i = 0; i < category_news.length; i++) {
-                news[category_news[i].category] = category_news[i].news
+            // 60 second cache
+            if (cachedNews && Date.now() - cacheTime < 60000) {
+                return res.status(200).json(cachedNews);
             }
-            return res.status(200).json({ news })
+
+
+
+
+            const categories = [
+                "राजनीति",
+                "खेल",
+                "राष्ट्रीय",
+                "अंतरराष्ट्रीय",
+                "प्रौद्योगिकी",
+                "मनोरंजन",
+                "लाइफस्टाइल",
+                "भक्ति",
+                "शिक्षा",
+                "स्वास्थ्य",
+                "मौसम",
+                "अपराध",
+                "राशि",
+                "बाज़ार"
+            ];
+
+            const news = {};
+
+            const queries = categories.map(async (category) => {
+
+                const data = await newsModel
+                    .find({ category, status: "active" })
+                    .sort({ createdAt: -1 })
+                    .limit(5)
+                    .select("title slug image writerName date category")
+                    .lean();
+
+                news[category] = data;
+            });
+
+            await Promise.all(queries);
+
+            const response = { news };
+
+            cachedNews = response;
+            cacheTime = Date.now();
+
+            return res.status(200).json(response);
+
         } catch (error) {
-            console.log(error.message)
-            return res.status(500).json({ message: 'internal server error' })
+            console.log(error);
+            return res.status(500).json({ message: "internal server error" });
         }
-    }
+    };
 
     get_news = async (req, res) => {
-        const { slug } = req.params
+
         try {
-            const news = await newsModel.findOneAndUpdate({ slug }, { $inc: { count: 1 } }, { new: true })
 
-            const relatedNews = await newsModel.find({
-                $and: [
-                    {
-                        slug: { $ne: slug }
-                    },
-                    {
-                        category: {
-                            $eq: news.category
-                        }
-                    }
-                ]
-            }).limit(5).sort({ createdAt: -1 })
+            const { slug } = req.params;
 
-            return res.status(200).json({ news: news ? news : {}, relatedNews })
+            const news = await newsModel
+                .findOneAndUpdate(
+                    { slug },
+                    { $inc: { count: 1 } },
+                    { new: true }
+                )
+                .select("title slug image description category writerName date createdAt")
+                .lean();
+
+            if (!news) {
+                return res.status(404).json({ message: "news not found" });
+            }
+
+            const relatedNews = await newsModel
+                .find({
+                    category: news.category,
+                    slug: { $ne: slug },
+                    status: "active"
+                })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select("title slug image date")
+                .lean();
+
+            res.json({ news, relatedNews });
 
         } catch (error) {
-            console.log(error.message)
-            return res.status(500).json({ message: 'internal server error' })
+
+            console.log(error);
+            res.status(500).json({ message: "server error" });
+
         }
-    }
+
+    };
 
     get_categories = async (req, res) => {
         try {
@@ -527,34 +540,21 @@ class newsController {
 
     get_latest_news = async (req, res) => {
         try {
-            const latestNews = await newsModel.find({ status: 'active' }).sort({ createdAt: -1 }).limit(6)
-            return res.status(200).json({ latestNews })
+
+            const latestNews = await newsModel
+                .find({ status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(6)
+                .select("title slug image writerName date category")
+                .lean();
+
+            return res.status(200).json({ latestNews });
+
         } catch (error) {
-            console.log(error.message)
-            return res.status(500).json({ message: 'internal server error' })
+            console.log(error.message);
+            return res.status(500).json({ message: "internal server error" });
         }
-    }
-
-    // delete_news = async (req, res) => {
-    //     const { news_id } = req.params
-    //     const { role } = req.userInfo
-
-    //     if (role === 'admin') {
-    //         try {
-    //             const news = await newsModel.findByIdAndDelete(news_id)
-    //             if (!news) {
-    //                 return res.status(404).json({ message: 'news not found' })
-    //             }
-    //             return res.status(200).json({ message: 'news deleted successfully', status: 'success' })
-    //         } catch (error) {
-    //             console.log(error.message)
-    //             return res.status(500).json({ message: 'internal server error' })
-    //         }
-    //     } else {
-    //         return res.status(401).json({ message: 'you cannot access this api server error' })
-    //     }
-    // }
-
+    };
 
     delete_news = async (req, res) => {
         const { news_id } = req.params
@@ -643,8 +643,6 @@ class newsController {
             return res.status(500).json({ message: 'Internal server error' });
         }
     }
-
-
 
     get_news_state = async (req, res) => {
         const { state } = req.params
