@@ -140,7 +140,7 @@ const newsSchema = new Schema({
 }, { timestamps: true })
 
 /* INDEXES */
-newsSchema.index({ slug: 1 });
+// newsSchema.index({ slug: 1 });
 newsSchema.index({ status: 1, createdAt: -1 })
 newsSchema.index({ category: 1, createdAt: -1 })
 newsSchema.index({ views: -1 })
