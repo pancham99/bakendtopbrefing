@@ -242,7 +242,7 @@ class newsController {
 
             const news = await newsModel
                 .find(query)
-                .select("title image category status createdAt date")
+                .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -387,10 +387,6 @@ class newsController {
             if (cachedNews && Date.now() - cacheTime < 60000) {
                 return res.status(200).json(cachedNews);
             }
-
-
-
-
             const categories = [
                 "राजनीति",
                 "खेल",
