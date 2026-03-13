@@ -326,6 +326,56 @@ class newsController {
         }
     }
 
+
+
+        get_dashboard_stats = async (req, res) => {
+
+        try {
+
+            const totalNews = await newsModel.countDocuments()
+
+            const activeNews = await newsModel.countDocuments({ status: "active" })
+
+            const pendingNews = await newsModel.countDocuments({ status: "pending" })
+
+            const deactiveNews = await newsModel.countDocuments({ status: "deactive" })
+
+            const totalWriter = await authModel.countDocuments({ role: "writer" })
+
+            const activeWriter = await authModel.countDocuments({
+                role: "writer",
+                status: "active"
+            })
+
+            const deactiveWriter = await authModel.countDocuments({
+                role: "writer",
+                status: "deactive"
+            })
+
+            console.log(totalNews)
+
+            res.status(200).json({
+                totalNews,
+                activeNews,
+                pendingNews,
+                deactiveNews,
+                totalWriter,
+                activeWriter,
+                deactiveWriter
+            })
+
+        } catch (error) {
+
+            console.log(error)
+
+            res.status(500).json({
+                message: "server error"
+            })
+
+        }
+
+    }
+
     get_dashboard_single_news = async (req, res) => {
         const { news_id } = req.params
 
