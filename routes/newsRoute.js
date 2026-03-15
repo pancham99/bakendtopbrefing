@@ -31,6 +31,7 @@ router.get('/api/news/:news_id', middleware.auth, newsController.get_dashboard_s
 
 router.get('/api/all/news', newsController.get_all_news);
 router.get('/api/breaking', newsController.get_breaking_news);
+router.get('/api/trending', newsController.get_Trending_news);
 router.get('/api/popular/news', newsController.get_popular_news);
 router.get('/api/latest/news', newsController.get_latest_news);
 

@@ -160,7 +160,29 @@ class newsController {
             const news = await newsModel.find({isBreaking: true, status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(5)
-                .select("title slug image category date createdAt")
+                .select("title slug image category date createdAt, writerName")
+                .lean();
+
+           
+
+            return res.status(200).json({ news });
+
+        } catch (error) {
+
+            return res.status(500).json({
+                message: "server error"
+            });
+
+        }
+    };
+
+     get_Trending_news = async (req, res) => {
+        try {
+
+            const news = await newsModel.find({isTrending: true, status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select("title slug image category date createdAt, writerName")
                 .lean();
 
            
@@ -242,7 +264,7 @@ class newsController {
 
             const news = await newsModel
                 .find(query)
-                .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular")
+                .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular, writerName")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
