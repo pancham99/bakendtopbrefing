@@ -160,7 +160,7 @@ class newsController {
             const news = await newsModel.find({isBreaking: true, status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(5)
-                .select("title slug image category date")
+                .select("title slug image category date createdAt")
                 .lean();
 
            
@@ -412,7 +412,7 @@ class newsController {
                     .find({ category, status: "active" })
                     .sort({ createdAt: -1 })
                     .limit(5)
-                    .select("title slug image writerName date category")
+                    .select("title slug image writerName date category, createdAt")
                     .lean();
 
                 news[category] = data;
@@ -541,7 +541,7 @@ class newsController {
                 .find({ status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(6)
-                .select("title slug image writerName date category")
+                .select("title slug image writerName date category createdAt")
                 .lean();
 
             return res.status(200).json({ latestNews });
