@@ -3,8 +3,8 @@ const cloudinary = require('cloudinary').v2;
 const newsModel = require('../models/newsModel');
 const authModel = require('../models/authModel');
 const galleryModel = require('../models/galleryModel');
-const subscriberModel = require('../models/subscriberModel'); // model for subscribers (email list)
-const sendMail = require('../utils/sendMail'); // utility function to send emails
+const subscriberModel = require('../models/subscriberModel'); 
+const sendMail = require('../utils/sendMail'); 
 const userModel = require('../models/userModel');
 const { mongo: { ObjectId } } = require('mongoose');
 
@@ -341,7 +341,7 @@ class newsController {
         const limit = parseInt(req.query.limit) || 20
         const skip = (page - 1) * limit
 
-        const { status, category, writerName, search, startDate, endDate } = req.query
+        const { status, category, writerName, search, startDate, endDate, type } = req.query
 
         try {
 
@@ -365,6 +365,15 @@ class newsController {
             // writer filter
             if (writerName) {
                 query.writerName = writerName
+            }
+
+              if (type) {
+
+                if (type === "breaking") query.isBreaking = true
+                if (type === "trending") query.isTrending = true
+                if (type === "featured") query.isFeatured = true
+                if (type === "popular") query.isPopular = true
+
             }
 
             // 🔥 SEARCH FILTER (IMPORTANT)
