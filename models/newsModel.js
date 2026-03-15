@@ -146,6 +146,9 @@ newsSchema.index({ category: 1, createdAt: -1 })
 newsSchema.index({ views: -1 })
 newsSchema.index({ isBreaking: 1, createdAt: -1 })
 newsSchema.index({ isTrending: 1, createdAt: -1 })
+newsSchema.index({ isTrending: 1 })
+newsSchema.index({ isPopular: 1 })
+newsSchema.index({ writerId: 1 })
 
 module.exports = model("news", newsSchema)
 
