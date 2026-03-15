@@ -157,13 +157,13 @@ class newsController {
     get_breaking_news = async (req, res) => {
         try {
 
-            const news = await newsModel.find({isBreaking: true, status: "active" })
+            const news = await newsModel.find({ isBreaking: true, status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .select("title slug image category date createdAt, writerName")
                 .lean();
 
-           
+
 
             return res.status(200).json({ news });
 
@@ -176,16 +176,16 @@ class newsController {
         }
     };
 
-     get_Trending_news = async (req, res) => {
+    get_Trending_news = async (req, res) => {
         try {
 
-            const news = await newsModel.find({isTrending: true, status: "active" })
+            const news = await newsModel.find({ isTrending: true, status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .select("title slug image category date createdAt, writerName")
                 .lean();
 
-           
+
 
             return res.status(200).json({ news });
 
@@ -243,36 +243,162 @@ class newsController {
 
     }
 
+    //     get_dashboard_news = async (req, res) => {
+
+    //         const { id, role } = req.userInfo
+
+    //         const page = parseInt(req.query.page) || 1
+    //         const limit = parseInt(req.query.limit) || 20
+    //         const skip = (page - 1) * limit
+    //         const start = Date.now()
+    //         const { category, writerName, status, isBreaking, isTrending, isPopular, startDate,
+    //             endDate } = req.query
+
+    //         try {
+
+    //             let query = {}
+
+    //             if (role !== "admin") {
+    //                 query.writerId = id
+    //             }
+
+    //  // Category filter
+    //         if (category) {
+    //             query.category = category
+    //         }
+
+    //         // Writer Name filter
+    //         if (writerName) {
+    //             query.writerName = { $regex: writerName, $options: "i" }
+    //         }
+
+    //         // Status filter
+    //         if (status) {
+    //             query.status = status
+    //         }
+
+    //          // Breaking filter
+    //         if (isBreaking !== undefined) {
+    //             query.isBreaking = isBreaking === "true"
+    //         }
+
+    //         // Trending filter
+    //         if (isTrending !== undefined) {
+    //             query.isTrending = isTrending === "true"
+    //         }
+
+    //         // Popular filter
+    //         if (isPopular !== undefined) {
+    //             query.isPopular = isPopular === "true"
+    //         }
+
+
+    //          // Date range filter
+    //         if (startDate || endDate) {
+    //             query.createdAt = {}
+
+    //             if (startDate) {
+    //                 query.createdAt.$gte = new Date(startDate)
+    //             }
+
+    //             if (endDate) {
+    //                 query.createdAt.$lte = new Date(endDate)
+    //             }
+    //         }
+
+
+    //             const news = await newsModel
+    //                 .find(query)
+    //                 .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular, writerName")
+    //                 .sort({ createdAt: -1 })
+    //                 .skip(skip)
+    //                 .limit(limit)
+    //                 .lean()
+
+    //             const total = await newsModel.countDocuments(query)
+
+    //             console.log("QUERY TIME:", Date.now() - start, "ms")
+
+    //             res.status(200).json({
+    //                 news,
+    //                 total,
+    //                 page,
+    //                 pages: Math.ceil(total / limit)
+    //             })
+
+    //         } catch (error) {
+    //             console.log(error)
+    //             res.status(500).json({ message: "server error" })
+    //         }
+    //     }
+
+
     get_dashboard_news = async (req, res) => {
 
         const { id, role } = req.userInfo
 
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 20
-
         const skip = (page - 1) * limit
 
-        const start = Date.now()
+        const { status, category, writerName, search, startDate, endDate } = req.query
 
         try {
 
             let query = {}
 
+            // role filter
             if (role !== "admin") {
                 query.writerId = id
             }
 
+            // status filter
+            if (status) {
+                query.status = status
+            }
+
+            // category filter
+            if (category) {
+                query.category = category
+            }
+
+            // writer filter
+            if (writerName) {
+                query.writerName = writerName
+            }
+
+            // 🔥 SEARCH FILTER (IMPORTANT)
+            if (search) {
+                query.title = { $regex: search, $options: "i" }
+            }
+            // DATE RANGE FILTER
+            if (startDate || endDate) {
+
+                query.createdAt = {}
+
+                if (startDate) {
+                    query.createdAt.$gte = new Date(startDate)
+                }
+
+                if (endDate) {
+
+                    const end = new Date(endDate)
+                    end.setHours(23, 59, 59, 999)
+
+                    query.createdAt.$lte = end
+                }
+            }
+
+
             const news = await newsModel
                 .find(query)
-                .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular, writerName")
+                .select("title image category status createdAt isBreaking isTrending isFeatured isPopular writerName")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .lean()
 
             const total = await newsModel.countDocuments(query)
-
-            console.log("QUERY TIME:", Date.now() - start, "ms")
 
             res.status(200).json({
                 news,
