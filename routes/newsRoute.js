@@ -20,11 +20,6 @@ router.post('/news/delete-multiple', middleware.auth, middleware.role, newsContr
 
 router.get('/api/news/:news_id', middleware.auth, newsController.get_dashboard_single_news);
 
-
-// website
-
-// type news
-
 // router.get('/api/news/featured', newsController.get_featured_news);
 // router.get('/api/news/trending', newsController.get_trending_news);
 // router.get('/api/news/popular', newsController.get_popular_news);
