@@ -3,17 +3,18 @@ const cloudinary = require('cloudinary').v2;
 const newsModel = require('../models/newsModel');
 const authModel = require('../models/authModel');
 const galleryModel = require('../models/galleryModel');
-const subscriberModel = require('../models/subscriberModel'); 
-const sendMail = require('../utils/sendMail'); 
+const subscriberModel = require('../models/subscriberModel');
+const sendMail = require('../utils/sendMail');
 const userModel = require('../models/userModel');
 const { mongo: { ObjectId } } = require('mongoose');
+const { transliterate } = require("transliteration");
+const slugify = require("slugify");
 
 const moment = require('moment');
 class newsController {
 
     add_news = async (req, res) => {
         const { id, category, name } = req.userInfo;
-
         const form = formidable({});
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -24,66 +25,256 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req);
-            const { title, description, state } = fields;
+            const { title, description, state, keywords, ogImage, shortDescription } = fields;
+            // Upload image
+            const { url } = await cloudinary.uploader.upload(
+                files.image[0].filepath,
+                {
+                    folder: "news_images"
+                }
+            );
 
-            // Upload image to cloudinary
-            const { url } = await cloudinary.uploader.upload(files.image[0].filepath, {
-                folder: 'news_images'
-            });
+            // If state exists then category null
+            const finalCategory =
+                state?.[0]?.trim() !== ""
+                    ? null
+                    : category;
 
-            // If `state` is given, nullify category
-            const finalCategory = state && state[0]?.trim() !== "" ? null : category;
+            // =========================
+            // SEO Friendly Slug
+            // =========================
 
-            // Create news entry
+            const cleanTitle = title[0].trim();
+
+            // Convert Hindi to readable English
+            const englishTitle = transliterate(cleanTitle);
+
+            let slug = englishTitle
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, "") // remove special chars
+                .replace(/\s+/g, "-")         // spaces => hyphen
+                .replace(/-+/g, "-")          // multiple hyphens => one
+                .replace(/^-|-$/g, "");       // remove start/end hyphen
+
+            // Add timestamp for uniqueness
+            slug = `${slug}-${Date.now()}`;
+
+            // =========================
+            // Save News
+            // =========================
+
             const news = await newsModel.create({
                 writerId: id,
-                title: title[0].trim(),
-                slug: title[0].trim().toLowerCase().replace(/\s+/g, '-'),
+                title: cleanTitle,
+                slug,
                 category: finalCategory,
-                state: state[0]?.trim() || null,
-                description: description[0]?.trim() || null,
+                state: state?.[0]?.trim() || null,
+                description: description?.[0]?.trim() || null,
                 image: url,
-                date: moment().format('LL'),
+                date: new Date(),
                 writerName: name,
                 count: 0
             });
 
-            // Fetch all subscribers
-            const subscribers = await subscriberModel.find({}, 'email');
+            // =========================
+            // Send Email To Subscribers
+            // =========================
+
+            const subscribers = await subscriberModel.find({}, "email");
 
             if (subscribers.length > 0) {
-                // Prepare email content
-                const subject = `📰 New News Published: ${title[0].trim()}`;
-                // const newsLink = `https://www.topbriefing.in/`;
+
+                const subject = `📰 New News Published: ${cleanTitle}`;
+
                 const message = `
-                <h2>${title[0].trim()}</h2>
-                <p>${description[0]?.trim()?.slice(0, 150)}...</p>
-                <a href="https://www.topbriefing.in/" 
-                    style="display:inline-block;margin-top:10px;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
+                <h2>${cleanTitle}</h2>
+
+                <p>
+                    ${description?.[0]?.trim()?.slice(0, 150)}...
+                </p>
+
+                <a
+                    href="https://www.topbriefing.in/news/${slug}"
+                    style="
+                        display:inline-block;
+                        margin-top:10px;
+                        padding:10px 20px;
+                        background:#007bff;
+                        color:#fff;
+                        text-decoration:none;
+                        border-radius:5px;
+                    "
+                >
                     Read Full Article
                 </a>
-                <br><br>
-                <small>Published by ${name} on ${moment().format('LL')}</small>
+
+                <br/><br/>
+
+                <small>
+                    Published by ${name}
+                    on ${moment().format("LL")}
+                </small>
             `;
 
-                // Send emails in background (not blocking response)
-                subscribers.forEach(sub => {
-                    sendMail(sub.email, subject, message).catch(err =>
-                        console.error(`Failed to send mail to ${sub.email}:`, err)
-                    );
+                subscribers.forEach((sub) => {
+                    sendMail(sub.email, subject, message)
+                        .catch((err) => {
+                            console.log(
+                                `Failed to send mail to ${sub.email}`,
+                                err
+                            );
+                        });
                 });
             }
 
-            return res.status(200).json({
-                message: 'News added successfully and notifications sent to subscribers.',
+            return res.status(201).json({
+                message: "News added successfully and notifications sent.",
                 news
             });
 
         } catch (error) {
-            console.error('Error adding news:', error);
-            return res.status(500).json({ message: 'Internal server error' });
+
+            console.log("Add News Error:", error);
+
+            return res.status(500).json({
+                message: "Internal Server Error"
+            });
         }
     };
+
+    // add_news = async (req, res) => {
+    //     const { id, category, name } = req.userInfo;
+
+    //     const form = formidable({});
+
+    //     cloudinary.config({
+    //         cloud_name: process.env.CLODINARY_CLOUD_NAME,
+    //         api_key: process.env.CLODINARY_API_KEY,
+    //         api_secret: process.env.CLODINARY_API_SECRET_KEY,
+    //         secure: true
+    //     });
+
+    //     try {
+    //         const [fields, files] = await form.parse(req);
+
+    //         const { title, description, state } = fields;
+
+    //         // Upload image
+    //         const { url } = await cloudinary.uploader.upload(
+    //             files.image[0].filepath,
+    //             {
+    //                 folder: "news_images"
+    //             }
+    //         );
+
+    //         // If state exists then category null
+    //         const finalCategory =
+    //             state?.[0]?.trim() !== ""
+    //                 ? null
+    //                 : category;
+
+    //         // =========================
+    //         // SEO Friendly Slug
+    //         // =========================
+
+    //         const cleanTitle = title[0].trim();
+
+    //         // Hindi => English slug
+    //         let slug = slugify(cleanTitle, {
+    //             lowercase: true,
+    //             separator: "-"
+    //         });
+
+    //         // Remove extra hyphens
+    //         slug = slug.replace(/-+/g, "-");
+
+    //         // Add unique id to avoid duplicate slug
+    //         slug = `${slug}-${Date.now()}`;
+
+    //         // =========================
+    //         // Save News
+    //         // =========================
+
+    //         const news = await newsModel.create({
+    //             writerId: id,
+    //             title: cleanTitle,
+    //             slug,
+    //             category: finalCategory,
+    //             state: state?.[0]?.trim() || null,
+    //             description: description?.[0]?.trim() || null,
+    //             image: url,
+    //             date: moment().format("LL"),
+    //             writerName: name,
+    //             count: 0
+    //         });
+
+    //         // =========================
+    //         // Send Email To Subscribers
+    //         // =========================
+
+    //         const subscribers = await subscriberModel.find({}, "email");
+
+    //         if (subscribers.length > 0) {
+
+    //             const subject = `📰 New News Published: ${cleanTitle}`;
+
+    //             const message = `
+    //             <h2>${cleanTitle}</h2>
+
+    //             <p>
+    //                 ${description?.[0]?.trim()?.slice(0, 150)}...
+    //             </p>
+
+    //             <a
+    //                 href="https://www.topbriefing.in/news/${slug}"
+    //                 style="
+    //                     display:inline-block;
+    //                     margin-top:10px;
+    //                     padding:10px 20px;
+    //                     background:#007bff;
+    //                     color:#fff;
+    //                     text-decoration:none;
+    //                     border-radius:5px;
+    //                 "
+    //             >
+    //                 Read Full Article
+    //             </a>
+
+    //             <br/><br/>
+
+    //             <small>
+    //                 Published by ${name}
+    //                 on ${moment().format("LL")}
+    //             </small>
+    //         `;
+
+    //             subscribers.forEach((sub) => {
+    //                 sendMail(sub.email, subject, message)
+    //                     .catch((err) => {
+    //                         console.log(
+    //                             `Failed to send mail to ${sub.email}`,
+    //                             err
+    //                         );
+    //                     });
+    //             });
+    //         }
+
+    //         return res.status(201).json({
+    //             message:
+    //                 "News added successfully and notifications sent.",
+    //             news
+    //         });
+
+    //     } catch (error) {
+
+    //         console.log("Add News Error:", error);
+
+    //         return res.status(500).json({
+    //             message: "Internal Server Error"
+    //         });
+    //     }
+    // };
+
 
 
     update_news = async (req, res) => {
@@ -160,7 +351,7 @@ class newsController {
             const news = await newsModel.find({ isBreaking: true, status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(5)
-                .select("title slug image category date createdAt writerName")
+                .select("title slug image category date createdAt writerName ")
                 .lean();
 
 
@@ -243,94 +434,7 @@ class newsController {
 
     }
 
-    //     get_dashboard_news = async (req, res) => {
 
-    //         const { id, role } = req.userInfo
-
-    //         const page = parseInt(req.query.page) || 1
-    //         const limit = parseInt(req.query.limit) || 20
-    //         const skip = (page - 1) * limit
-    //         const start = Date.now()
-    //         const { category, writerName, status, isBreaking, isTrending, isPopular, startDate,
-    //             endDate } = req.query
-
-    //         try {
-
-    //             let query = {}
-
-    //             if (role !== "admin") {
-    //                 query.writerId = id
-    //             }
-
-    //  // Category filter
-    //         if (category) {
-    //             query.category = category
-    //         }
-
-    //         // Writer Name filter
-    //         if (writerName) {
-    //             query.writerName = { $regex: writerName, $options: "i" }
-    //         }
-
-    //         // Status filter
-    //         if (status) {
-    //             query.status = status
-    //         }
-
-    //          // Breaking filter
-    //         if (isBreaking !== undefined) {
-    //             query.isBreaking = isBreaking === "true"
-    //         }
-
-    //         // Trending filter
-    //         if (isTrending !== undefined) {
-    //             query.isTrending = isTrending === "true"
-    //         }
-
-    //         // Popular filter
-    //         if (isPopular !== undefined) {
-    //             query.isPopular = isPopular === "true"
-    //         }
-
-
-    //          // Date range filter
-    //         if (startDate || endDate) {
-    //             query.createdAt = {}
-
-    //             if (startDate) {
-    //                 query.createdAt.$gte = new Date(startDate)
-    //             }
-
-    //             if (endDate) {
-    //                 query.createdAt.$lte = new Date(endDate)
-    //             }
-    //         }
-
-
-    //             const news = await newsModel
-    //                 .find(query)
-    //                 .select("title image category status createdAt date isBreaking isTrending isFeatured isPopular, writerName")
-    //                 .sort({ createdAt: -1 })
-    //                 .skip(skip)
-    //                 .limit(limit)
-    //                 .lean()
-
-    //             const total = await newsModel.countDocuments(query)
-
-    //             console.log("QUERY TIME:", Date.now() - start, "ms")
-
-    //             res.status(200).json({
-    //                 news,
-    //                 total,
-    //                 page,
-    //                 pages: Math.ceil(total / limit)
-    //             })
-
-    //         } catch (error) {
-    //             console.log(error)
-    //             res.status(500).json({ message: "server error" })
-    //         }
-    //     }
 
 
     get_dashboard_news = async (req, res) => {
@@ -367,7 +471,7 @@ class newsController {
                 query.writerName = writerName
             }
 
-              if (type) {
+            if (type) {
 
                 if (type === "breaking") query.isBreaking = true
                 if (type === "trending") query.isTrending = true
@@ -486,6 +590,7 @@ class newsController {
     }
 
     get_all_news = async (req, res) => {
+        
         let cachedNews = null;
         let cacheTime = 0;
         try {
@@ -519,8 +624,10 @@ class newsController {
                     .find({ category, status: "active" })
                     .sort({ createdAt: -1 })
                     .limit(5)
-                    .select("title slug image writerName date category, createdAt")
+                    .select("title slug image writerName date category shortDescription createdAt keywords")
                     .lean();
+
+                    console.log(JSON.stringify(data[0], null, 2));
 
                 news[category] = data;
             });
@@ -528,6 +635,7 @@ class newsController {
             await Promise.all(queries);
 
             const response = { news };
+            console.log(news, "Fetched news from DB and cached it.");
 
             cachedNews = response;
             cacheTime = Date.now();
@@ -648,7 +756,7 @@ class newsController {
                 .find({ status: "active" })
                 .sort({ createdAt: -1 })
                 .limit(6)
-                .select("title slug image writerName date category createdAt")
+                .select("title slug image writerName date category shortDescription createdAt keywords")
                 .lean();
 
             return res.status(200).json({ latestNews });
@@ -795,10 +903,6 @@ class newsController {
             return res.status(500).json({ message: 'internal server error' });
         }
     }
-
-
-
-
 
 }
 

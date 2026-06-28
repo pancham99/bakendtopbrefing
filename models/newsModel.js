@@ -32,6 +32,21 @@ const newsSchema = new Schema({
     required: true
   },
 
+  keywords: [{
+    type: String,
+    trim: true
+  }],
+
+  ogImage: {
+    type: String,
+    default: ""
+  },
+
+  canonicalUrl: {
+    type: String,
+    default: ""
+  },
+
   category: {
     type: String,
     index: true
@@ -40,6 +55,13 @@ const newsSchema = new Schema({
   description: {
     type: String,
     default: ""
+  },
+
+  shortDescription: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 200
   },
 
   date: {
@@ -147,7 +169,7 @@ newsSchema.index({ views: -1 })
 newsSchema.index({ isBreaking: 1, createdAt: -1 })
 newsSchema.index({ isTrending: 1, createdAt: -1 })
 
-newsSchema.index({ isPopular: 1, createdAt: -1})
+newsSchema.index({ isPopular: 1, createdAt: -1 })
 newsSchema.index({ writerId: 1, createdAt: -1 })
 
 module.exports = model("news", newsSchema)
