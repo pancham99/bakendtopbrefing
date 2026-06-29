@@ -25,7 +25,7 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req);
-            const { title, description, state, keywords, ogImage, shortDescription } = fields;
+            const { title, description, state, shortDescription, keywords } = fields;
             // Upload image
             const { url } = await cloudinary.uploader.upload(
                 files.image[0].filepath,
@@ -70,6 +70,8 @@ class newsController {
                 category: finalCategory,
                 state: state?.[0]?.trim() || null,
                 description: description?.[0]?.trim() || null,
+                shortDescription: shortDescription?.[0]?.trim() || null,
+                keywords: keywords?.[0]?.split(",").map(k => k.trim()) || [],
                 image: url,
                 date: new Date(),
                 writerName: name,
@@ -660,7 +662,7 @@ class newsController {
                     { $inc: { count: 1 } },
                     { new: true }
                 )
-                .select("title slug image description category writerName date createdAt")
+                .select("title slug image description category writerName date createdAt shortDescription keywords")
                 .lean();
 
             if (!news) {

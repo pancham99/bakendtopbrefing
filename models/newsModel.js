@@ -59,7 +59,6 @@ const newsSchema = new Schema({
 
   shortDescription: {
     type: String,
-    required: true,
     trim: true,
     maxlength: 200
   },
