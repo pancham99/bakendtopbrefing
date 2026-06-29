@@ -30,7 +30,8 @@
     "nodemailer": "^7.0.9",
     "react-hot-toast": "^2.4.1",
     "serverless-http": "^3.2.0",
-    "slugify": "^1.6.8"
+    "slugify": "^1.6.9",
+    "transliteration": "^2.6.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
