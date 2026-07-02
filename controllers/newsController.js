@@ -8,6 +8,9 @@ const sendMail = require('../utils/sendMail');
 const userModel = require('../models/userModel');
 const { mongo: { ObjectId } } = require('mongoose');
 
+// Redis publishClient — sirf news approve hone par use hoga
+const { publishClient } = require('../utils/redisClient');
+
 const moment = require('moment');
 class newsController {
 
@@ -132,6 +135,27 @@ class newsController {
 
         if (role === 'admin') {
             const news = await newsModel.findByIdAndUpdate(news_id, { status }, { new: true })
+
+            // ─── REDIS PUBLISH (FIRE & FORGET) ───────────────────────
+            // Hum sirf tab publish karte hain jab status "active" ho raha ho.
+            // Kyun? Kyunki:
+            //   - "deactive" → news hide ho rahi hai, users ko push nahi karna
+            //   - "pending" → draft hai, abhi ready nahi
+            //   - "active" → ab yeh live hai, sab users ko instantly dikhao
+            //
+            // "Fire and forget" pattern:
+            //   - Hum .catch() lagate hain lekin await nahi karte
+            //   - Matlab: Redis publish ka wait kiye bina admin ko
+            //     response bhej do (fast response)
+            //   - Agar Redis down hai, error log hoga lekin admin ka
+            //     API response slow ya fail nahi hoga
+            // ─────────────────────────────────────────────────────────
+            if (status === 'active') {
+                publishClient
+                    .publish('news:active', JSON.stringify(news))
+                    .catch(err => console.error('[Redis] Failed to publish news:active event:', err.message));
+            }
+
             return res.status(200).json({ message: 'news status update successfully', news })
         } else {
             return res.status(401).json({ message: 'you cannot access this api server error' })
