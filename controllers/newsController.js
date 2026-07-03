@@ -46,18 +46,20 @@ class newsController {
 
             const cleanTitle = title[0].trim();
 
-            // Convert Hindi to readable English
-            const englishTitle = transliterate(cleanTitle);
+            let slug = cleanTitle
+                .normalize("NFC") // Fix Hindi Unicode
+                .trim()
+                .replace(/[^\p{L}\p{N}\s-]/gu, "") // Keep Hindi, English, Numbers
+                .replace(/\s+/g, "-")              // Space => -
+                .replace(/-+/g, "-")               // Remove duplicate -
+                .replace(/^-|-$/g, "");            // Remove first/last -
 
-            let slug = englishTitle
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "") // remove special chars
-                .replace(/\s+/g, "-")         // spaces => hyphen
-                .replace(/-+/g, "-")          // multiple hyphens => one
-                .replace(/^-|-$/g, "");       // remove start/end hyphen
+            // Make slug unique
+            const exists = await newsModel.findOne({ slug });
 
-            // Add timestamp for uniqueness
-            slug = `${slug}-${Date.now()}`;
+            if (exists) {
+                slug = `${slug}-${Date.now()}`;
+            }
 
             // =========================
             // Save News
@@ -592,7 +594,7 @@ class newsController {
     }
 
     get_all_news = async (req, res) => {
-        
+
         let cachedNews = null;
         let cacheTime = 0;
         try {
@@ -629,7 +631,7 @@ class newsController {
                     .select("title slug image writerName date category shortDescription createdAt keywords")
                     .lean();
 
-                    console.log(JSON.stringify(data[0], null, 2));
+                console.log(JSON.stringify(data[0], null, 2));
 
                 news[category] = data;
             });

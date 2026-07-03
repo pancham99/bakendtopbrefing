@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan'); // optional
 // const serverless = require('serverless-http'); // for vercel or netlify
-
+const path = require("path");
 const db_connect = require('./utils/db');
 const authRoutes = require('./routes/authRouters');
 const newsRoutes = require('./routes/newsRoute');
@@ -24,7 +24,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-
+app.use("/assets", express.static(path.join(__dirname, "public")));
 // ─── Middleware ───────────────────────────────────────────
 // app.use(bodyParser.json());
 app.use(bodyParser.json({ limit: '500mb' }));
