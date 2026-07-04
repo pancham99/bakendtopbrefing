@@ -25,7 +25,7 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req);
-            const { title, description, state, shortDescription, keywords } = fields;
+            const { title, description, state, shortDescription, keywords, slug } = fields;
             // Upload image
             const { url } = await cloudinary.uploader.upload(
                 files.image[0].filepath,
@@ -35,10 +35,7 @@ class newsController {
             );
 
             // If state exists then category null
-            const finalCategory =
-                state?.[0]?.trim() !== ""
-                    ? null
-                    : category;
+            // (replaced below with correct finalCategory logic)
 
             // =========================
             // SEO Friendly Slug
@@ -46,18 +43,11 @@ class newsController {
 
             const cleanTitle = title[0].trim();
 
-            // Convert Hindi to readable English
-            const englishTitle = transliterate(cleanTitle);
+            // Use slug from frontend, fallback to title with spaces→hyphens
+            const finalSlug = slug?.[0]?.trim() || cleanTitle.replace(/\s+/g, '-');
 
-            let slug = englishTitle
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, "") // remove special chars
-                .replace(/\s+/g, "-")         // spaces => hyphen
-                .replace(/-+/g, "-")          // multiple hyphens => one
-                .replace(/^-|-$/g, "");       // remove start/end hyphen
-
-            // Add timestamp for uniqueness
-            slug = `${slug}-${Date.now()}`;
+            // If state exists then category null, otherwise use writer's category
+            const finalCategory = state?.[0]?.trim() ? null : category;
 
             // =========================
             // Save News
@@ -66,12 +56,12 @@ class newsController {
             const news = await newsModel.create({
                 writerId: id,
                 title: cleanTitle,
-                slug,
+                slug: finalSlug,
                 category: finalCategory,
                 state: state?.[0]?.trim() || null,
                 description: description?.[0]?.trim() || null,
                 shortDescription: shortDescription?.[0]?.trim() || null,
-                keywords: keywords?.[0]?.split(",").map(k => k.trim()) || [],
+                keywords: keywords?.[0] ? keywords[0].split(",").map(k => k.trim()).filter(Boolean) : [],
                 image: url,
                 date: new Date(),
                 writerName: name,
@@ -642,7 +632,7 @@ class newsController {
     }
 
     get_all_news = async (req, res) => {
-        
+
         let cachedNews = null;
         let cacheTime = 0;
         try {
@@ -679,7 +669,7 @@ class newsController {
                     .select("title slug image writerName date category shortDescription createdAt keywords")
                     .lean();
 
-                    console.log(JSON.stringify(data[0], null, 2));
+                console.log(JSON.stringify(data[0], null, 2));
 
                 news[category] = data;
             });
