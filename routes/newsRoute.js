@@ -18,26 +18,22 @@ router.get("/api/dashboard",  newsController.get_dashboard_stats);
 // delete router
 router.post('/news/delete-multiple', middleware.auth, middleware.role, newsController.delete_multiple_news);
 
-router.get('/api/news/:news_id', middleware.auth, newsController.get_dashboard_single_news);
-
-// router.get('/api/news/featured', newsController.get_featured_news);
-// router.get('/api/news/trending', newsController.get_trending_news);
-// router.get('/api/news/popular', newsController.get_popular_news);
-
 router.get('/api/all/news', newsController.get_all_news);
 router.get('/api/breaking', newsController.get_breaking_news);
 router.get('/api/trending', newsController.get_Trending_news);
 router.get('/api/popular/news', newsController.get_popular_news);
 router.get('/api/latest/news', newsController.get_latest_news);
 
+// ⚠️ specific routes MUST come before the wildcard /:news_id
 router.get('/api/news/details/:slug', newsController.get_news);
-router.get('/api/category/all', newsController.get_categories);
-
-router.get('/api/news/category/:category',newsController.get_category_by_name);
-// get_get_news_state name
+router.get('/api/news/category/:category', newsController.get_category_by_name);
 router.get('/api/news/state/:state', newsController.get_news_state);
+router.get('/api/news/recent/news', newsController.get_recent_news);
+router.get('/api/category/all', newsController.get_categories);
 router.get('/api/search/news', newsController.get_seach_news);
-router.get('/api/news/recent/news', newsController.get_recent_news );
+
+// wildcard — must be last among GET /api/news/* routes
+router.get('/api/news/:news_id', middleware.auth, newsController.get_dashboard_single_news);
 
 
 

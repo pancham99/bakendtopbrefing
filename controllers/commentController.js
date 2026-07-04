@@ -64,7 +64,7 @@ class commentController {
         }
     };
 
-    // Delete a comment (only the comment owner or admin can delete)
+    // Delete a comment (comment owner OR admin can delete)
     delete_comment = async (req, res) => {
         try {
             const { commentId } = req.params;
@@ -79,8 +79,11 @@ class commentController {
                 return res.status(404).json({ message: 'Comment not found' });
             }
 
-            // Only the comment owner can delete
-            if (comment.userId.toString() !== userId?.toString()) {
+            // Allow if: comment owner OR admin (no userId passed = admin deletion)
+            const isOwner = userId && comment.userId.toString() === userId.toString();
+            const isAdminDelete = !userId; // admin calls without userId
+
+            if (!isOwner && !isAdminDelete) {
                 return res.status(403).json({ message: 'Not authorized to delete this comment' });
             }
 

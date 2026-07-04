@@ -43,8 +43,11 @@ class newsController {
 
             const cleanTitle = title[0].trim();
 
-            // Use slug from frontend, fallback to title with spaces→hyphens
-            const finalSlug = slug?.[0]?.trim() || cleanTitle.replace(/\s+/g, '-');
+            // ── Devanagari → ASCII slug ──────────────────────────────
+          
+
+         
+            // Use slug from frontend if provided, otherwise generate from title
 
             // If state exists then category null, otherwise use writer's category
             const finalCategory = state?.[0]?.trim() ? null : category;
@@ -56,7 +59,7 @@ class newsController {
             const news = await newsModel.create({
                 writerId: id,
                 title: cleanTitle,
-                slug: finalSlug,
+                slug: slug?.[0]?.trim() || transliterate(cleanTitle).toLowerCase().replace(/\s+/g, '-'),
                 category: finalCategory,
                 state: state?.[0]?.trim() || null,
                 description: description?.[0]?.trim() || null,
