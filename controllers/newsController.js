@@ -35,15 +35,23 @@ class newsController {
             );
 
             // If state exists then category null
-            const finalCategory =
-                state?.[0]?.trim() !== ""
-                    ? null
-                    : category;
+            // (replaced below with correct finalCategory logic)
 
-            const cleanTitle = title?.[0]?.trim();
+            // =========================
+            // SEO Friendly Slug
+            // =========================
 
-            // Use slug sent from frontend (already generated correctly), fallback to title with spaces→hyphens
+            const cleanTitle = title[0].trim();
+
+            // Use slug from frontend, fallback to title with spaces→hyphens
             const finalSlug = slug?.[0]?.trim() || cleanTitle.replace(/\s+/g, '-');
+
+            // If state exists then category null, otherwise use writer's category
+            const finalCategory = state?.[0]?.trim() ? null : category;
+
+            // =========================
+            // Save News
+            // =========================
 
             const news = await newsModel.create({
                 writerId: id,
@@ -53,7 +61,7 @@ class newsController {
                 state: state?.[0]?.trim() || null,
                 description: description?.[0]?.trim() || null,
                 shortDescription: shortDescription?.[0]?.trim() || null,
-                keywords: keywords?.[0]?.split(",").map(k => k.trim()) || [],
+                keywords: keywords?.[0] ? keywords[0].split(",").map(k => k.trim()).filter(Boolean) : [],
                 image: url,
                 date: new Date(),
                 writerName: name,
