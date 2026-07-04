@@ -13,7 +13,8 @@ const bannerRoutes = require('./routes/bannerRouters');
 const videoRoutes = require('./routes/videoRouters');
 const advertisementRoutes = require('./routes/advertisementRouters');
 const userRoutes = require('./routes/userRouters'); 
-const commentRoutes = require('./routes/commentRouters'); // Uncomment if you have comment routes
+const commentRoutes = require('./routes/commentRouters');
+const likeRoutes = require('./routes/likeRouters');
 const subscribeRouters = require('./routes/subscribeRouters');
 const videoYoutubeRouters = require('./routes/videoYoutubeRouters');
 
@@ -47,7 +48,8 @@ app.use('/', bannerRoutes);
 app.use('/', videoRoutes);
 app.use('/', advertisementRoutes);
 app.use('/', userRoutes); // Uncomment if you have user routes
-app.use('/', commentRoutes); // Uncomment if you have comment routes
+app.use('/', commentRoutes);
+app.use('/', likeRoutes);
 app.use('/', subscribeRouters);
 app.use('/', videoYoutubeRouters);
 
