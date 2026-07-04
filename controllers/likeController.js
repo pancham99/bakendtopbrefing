@@ -58,7 +58,7 @@ class likeController {
     get_likes = async (req, res) => {
         try {
             const { newsId } = req.params;
-            const { userId } = req.query; // optional — to check if this user liked
+            const { userId } = req.query;
 
             if (!newsId) {
                 return res.status(400).json({ message: 'newsId is required' });
@@ -75,6 +75,30 @@ class likeController {
             return res.status(200).json({ likeCount, liked });
         } catch (error) {
             console.error('Get likes error:', error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    };
+
+    // Get all users who liked a news article (admin use)
+    get_likes_detail = async (req, res) => {
+        try {
+            const { newsId } = req.params;
+
+            if (!newsId) {
+                return res.status(400).json({ message: 'newsId is required' });
+            }
+
+            const likes = await likeModel
+                .find({ newsId })
+                .populate('userId', 'name email')
+                .sort({ createdAt: -1 });
+
+            return res.status(200).json({
+                likeCount: likes.length,
+                likes
+            });
+        } catch (error) {
+            console.error('Get likes detail error:', error);
             return res.status(500).json({ message: 'Internal server error' });
         }
     };
