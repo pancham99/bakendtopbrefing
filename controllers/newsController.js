@@ -25,7 +25,7 @@ class newsController {
 
         try {
             const [fields, files] = await form.parse(req);
-            const { title, description, state, shortDescription, keywords } = fields;
+            const { title, description, state, shortDescription, keywords, slug } = fields;
             // Upload image
             const { url } = await cloudinary.uploader.upload(
                 files.image[0].filepath,
@@ -40,35 +40,15 @@ class newsController {
                     ? null
                     : category;
 
-            // =========================
-            // SEO Friendly Slug
-            // =========================
+            const cleanTitle = title?.[0]?.trim();
 
-            const cleanTitle = title[0].trim();
-
-            let slug = cleanTitle
-                .normalize("NFC") // Fix Hindi Unicode
-                .trim()
-                .replace(/[^\p{L}\p{N}\s-]/gu, "") // Keep Hindi, English, Numbers
-                .replace(/\s+/g, "-")              // Space => -
-                .replace(/-+/g, "-")               // Remove duplicate -
-                .replace(/^-|-$/g, "");            // Remove first/last -
-
-            // Make slug unique
-            const exists = await newsModel.findOne({ slug });
-
-            if (exists) {
-                slug = `${slug}-${Date.now()}`;
-            }
-
-            // =========================
-            // Save News
-            // =========================
+            // Use slug sent from frontend (already generated correctly), fallback to title with spaces→hyphens
+            const finalSlug = slug?.[0]?.trim() || cleanTitle.replace(/\s+/g, '-');
 
             const news = await newsModel.create({
                 writerId: id,
                 title: cleanTitle,
-                slug,
+                slug: finalSlug,
                 category: finalCategory,
                 state: state?.[0]?.trim() || null,
                 description: description?.[0]?.trim() || null,
