@@ -44,9 +44,9 @@ class newsController {
             const cleanTitle = title[0].trim();
 
             // ── Devanagari → ASCII slug ──────────────────────────────
-          
 
-         
+
+
             // Use slug from frontend if provided, otherwise generate from title
 
             // If state exists then category null, otherwise use writer's category
@@ -948,6 +948,48 @@ class newsController {
             return res.status(500).json({ message: 'internal server error' });
         }
     }
+
+
+
+   get_sitemap_news = async (req, res) => {
+    try {
+
+        const news = await newsModel
+            .find({ status: "active" })
+            .sort({ updatedAt: -1 })
+            .select("slug updatedAt")
+            .lean();
+
+        const sitemapNews = news.map((item) => {
+            let slug = item.slug || "";
+
+            // Decode only if encoded
+            try {
+                slug = decodeURIComponent(slug);
+            } catch (err) {
+                // Ignore invalid encoded strings
+            }
+
+            return {
+                slug,
+                updatedAt: item.updatedAt,
+            };
+        });
+
+        return res.status(200).json({
+            success: true,
+            news: sitemapNews,
+        });
+
+    } catch (error) {
+        console.error("Sitemap API Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
 
 }
 
