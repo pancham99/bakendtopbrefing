@@ -31,6 +31,8 @@ router.get('/api/news/state/:state', newsController.get_news_state);
 router.get('/api/news/recent/news', newsController.get_recent_news);
 router.get('/api/category/all', newsController.get_categories);
 router.get('/api/search/news', newsController.get_seach_news);
+router.get( "/api/sitemap/news", newsController.get_sitemap_news);
+
 
 // wildcard — must be last among GET /api/news/* routes
 router.get('/api/news/:news_id', middleware.auth, newsController.get_dashboard_single_news);
