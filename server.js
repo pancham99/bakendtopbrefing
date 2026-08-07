@@ -20,7 +20,6 @@ const videoYoutubeRouters = require('./routes/videoYoutubeRouters');
 const analyticsRoutes = require('./routes/analyticsRoute'); // Import the new route
 // ─── Config & App Initialization ─────────────────────────
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 app.use("/assets", express.static(path.join(__dirname, "public")));
