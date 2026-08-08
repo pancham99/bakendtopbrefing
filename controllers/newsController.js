@@ -42,11 +42,7 @@ class newsController {
             // =========================
 
             const cleanTitle = title[0].trim();
-
             // ── Devanagari → ASCII slug ──────────────────────────────
-
-
-
             // Use slug from frontend if provided, otherwise generate from title
 
             // If state exists then category null, otherwise use writer's category
@@ -329,10 +325,10 @@ class newsController {
     update_news_types = async (req, res) => {
         const { role } = req.userInfo
         const { news_id } = req.params
-        const { isBreaking, isFeatured, isTrending, isPopular } = req.body;
+        const { isBreaking, isFeatured, isTrending, isPopular, isHestory } = req.body;
 
         if (role === 'admin') {
-            const news = await newsModel.findByIdAndUpdate(news_id, { isBreaking, isFeatured, isTrending, isPopular }, { new: true })
+            const news = await newsModel.findByIdAndUpdate(news_id, { isBreaking, isFeatured, isTrending, isPopular, isHestory }, { new: true })
             return res.status(200).json({ message: 'news type update successfully', news })
         } else {
             return res.status(401).json({ message: 'you cannot access this api server error' })
@@ -383,6 +379,79 @@ class newsController {
 
         }
     };
+
+     get_hestory_news = async (req, res) => {
+        try {
+
+            const news = await newsModel.find({ isHestory: true, status: "active" })
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select("title slug image category date createdAt writerName")
+                .lean();
+
+
+
+            return res.status(200).json({ news });
+
+        } catch (error) {
+
+            return res.status(500).json({
+                message: "server error"
+            });
+
+        }
+    };
+
+    // get_hestory_news = async (req, res) => {
+    //     try {
+
+    //         const news = await newsModel.find({ isHestory: true, status: "active" })
+    //             .sort({ createdAt: -1 })
+    //             .limit(5)
+    //             .select("title slug image category date createdAt writerName")
+    //             .lean();
+
+    //         return res.status(200).json({ news });
+
+    //     } catch (error) {
+
+    //         return res.status(500).json({
+    //             message: "server error"
+    //         });
+
+    //     }
+    // };
+
+
+//     get_hestory_news = async (req, res) => {
+//     try {
+//         const news = await newsModel
+//             .findOne({
+//                 isHestory: true,
+//                 status: "active"
+//             })
+//             .sort({ createdAt: -1 })
+//             .select("title slug image category date createdAt writerName")
+//             .lean();
+
+//         if (!news) {
+//             return res.status(404).json({
+//                 message: "History news not found"
+//             });
+//         }
+
+//         return res.status(200).json({
+//             news
+//         });
+
+//     } catch (error) {
+//         console.error("Get history news error:", error);
+
+//         return res.status(500).json({
+//             message: "Server error"
+//         });
+//     }
+// };
 
 
 
