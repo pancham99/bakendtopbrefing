@@ -23,6 +23,7 @@ router.get('/api/breaking', newsController.get_breaking_news);
 router.get('/api/trending', newsController.get_Trending_news);
 router.get('/api/popular/news', newsController.get_popular_news);
 router.get('/api/latest/news', newsController.get_latest_news);
+router.get('/api/hestory', newsController.get_hestory_news);
 
 // ⚠️ specific routes MUST come before the wildcard /:news_id
 router.get('/api/news/details/:slug', newsController.get_news);

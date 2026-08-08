@@ -100,6 +100,12 @@ const newsSchema = new Schema({
     index: true
   },
 
+  isHestory:{
+    type: Boolean,
+    default: false,
+    index: true
+  },
+
   isFeatured: {
     type: Boolean,
     default: false,
@@ -167,7 +173,7 @@ newsSchema.index({ category: 1, createdAt: -1 })
 newsSchema.index({ views: -1 })
 newsSchema.index({ isBreaking: 1, createdAt: -1 })
 newsSchema.index({ isTrending: 1, createdAt: -1 })
-
+newsSchema.index({ ishestory: 1, createdAt: -1 })
 newsSchema.index({ isPopular: 1, createdAt: -1 })
 newsSchema.index({ writerId: 1, createdAt: -1 })
 
