@@ -3,11 +3,13 @@ const {model, Schema} = require('mongoose');
 const subscriberSchema = new Schema({
     email: {
         type: String,
-        default: null
+        default: null,
+        index: { unique: true, sparse: true }
     },
     fcmToken: {
         type: String,
-        default: null
+        default: null,
+        index: { unique: true, sparse: true }
     },
     deviceInfo: {
         userAgent: String,
