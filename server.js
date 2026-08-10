@@ -1,6 +1,8 @@
-// ─── Module Imports ───────────────────────────────────────
-const express = require('express');
+// ─── Module Imports & Config ─────────────────────────────────
 const dotenv = require('dotenv');
+dotenv.config();
+
+const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan'); // optional
@@ -18,8 +20,8 @@ const likeRoutes = require('./routes/likeRouters');
 const subscribeRouters = require('./routes/subscribeRouters');
 const videoYoutubeRouters = require('./routes/videoYoutubeRouters');
 const analyticsRoutes = require('./routes/analyticsRoute'); // Import the new route
-// ─── Config & App Initialization ─────────────────────────
-dotenv.config();
+
+// ─── App Initialization ───────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 5001;
 app.use("/assets", express.static(path.join(__dirname, "public")));

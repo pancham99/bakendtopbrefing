@@ -11,6 +11,7 @@ const { transliterate } = require("transliteration");
 const slugify = require("slugify");
 
 const moment = require('moment');
+const { sendNewsPushNotification } = require('../utils/pushNotification');
 class newsController {
 
     add_news = async (req, res) => {
@@ -108,15 +109,28 @@ class newsController {
             `;
 
                 subscribers.forEach((sub) => {
-                    sendMail(sub.email, subject, message)
-                        .catch((err) => {
-                            console.log(
-                                `Failed to send mail to ${sub.email}`,
-                                err
-                            );
-                        });
+                    if (sub.email) {
+                        sendMail(sub.email, subject, message)
+                            .catch((err) => {
+                                console.log(
+                                    `Failed to send mail to ${sub.email}`,
+                                    err
+                                );
+                            });
+                    }
                 });
             }
+
+            // =========================
+            // Send FCM Push Notification
+            // =========================
+            sendNewsPushNotification({
+                title: cleanTitle,
+                description: shortDescription?.[0]?.trim() || description?.[0]?.trim() || '',
+                slug: news.slug,
+                image: url,
+                newsId: news._id
+            }).catch(err => console.error("Error triggering push notification in add_news:", err));
 
             return res.status(201).json({
                 message: "News added successfully and notifications sent.",
@@ -130,6 +144,39 @@ class newsController {
             return res.status(500).json({
                 message: "Internal Server Error"
             });
+        }
+    };
+
+    send_specific_news_notification = async (req, res) => {
+        try {
+            const { news_id } = req.params;
+            const news = await newsModel.findById(news_id);
+            if (!news) {
+                return res.status(404).json({ message: 'News article not found' });
+            }
+
+            const pushResult = await sendNewsPushNotification({
+                title: news.title,
+                description: news.shortDescription || news.description,
+                slug: news.slug,
+                image: news.image,
+                newsId: news._id
+            });
+
+            if (pushResult.success) {
+                return res.status(200).json({
+                    message: `Push notification sent to ${pushResult.sentCount || 0} subscriber(s).`,
+                    sentCount: pushResult.sentCount,
+                    failedCount: pushResult.failedCount
+                });
+            } else {
+                return res.status(500).json({
+                    message: pushResult.error || pushResult.reason || 'Failed to send push notification'
+                });
+            }
+        } catch (error) {
+            console.error('Error sending specific news notification:', error);
+            return res.status(500).json({ message: 'Internal Server Error' });
         }
     };
 
