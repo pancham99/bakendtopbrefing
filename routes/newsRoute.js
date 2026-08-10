@@ -3,6 +3,7 @@ const middleware = require('../middlewares/middleware');
 const newsController = require('../controllers/newsController');
 
 router.post('/api/news/add', middleware.auth, newsController.add_news);
+router.post('/api/news/send-notification/:news_id', middleware.auth, newsController.send_specific_news_notification);
 router.put('/api/news/update/:news_id', middleware.auth, newsController.update_news);
 
 router.put('/api/news/status-update/:news_id', middleware.auth, newsController.update_news_status);
