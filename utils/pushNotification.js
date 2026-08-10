@@ -31,34 +31,39 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
       return { success: true, sentCount: 0, message: 'No valid FCM tokens found' };
     }
 
-    const articleUrl = targetUrl || (slug ? `https://www.topbriefing.in/news/${slug}` : 'https://www.topbriefing.in');
+    const articleUrl = targetUrl || (slug ? `https://topbriefing.in/news/${slug}` : 'https://topbriefing.in');
     const cleanDescription = (description || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 150);
+    const cleanImage = image ? image.replace(/^http:\/\//i, 'https://') : 'https://topbriefing.in/logo.png';
+    const logoUrl = 'https://topbriefing.in/logo.png';
 
-    // FCM Multicast payload
+    // FCM Multicast payload with full Android & WebPush compatibility
     const messagePayload = {
       tokens: tokens,
       notification: {
         title: title || 'Top Briefing News Update',
         body: cleanDescription || 'Read the latest story on Top Briefing.',
-        ...(image ? { imageUrl: image } : {})
+        imageUrl: cleanImage
       },
       data: {
         newsId: String(newsId || ''),
         slug: String(slug || ''),
         url: articleUrl,
         title: title || '',
-        image: image || ''
+        image: cleanImage
       },
       webpush: {
         headers: {
-          Urgency: 'high'
+          Urgency: 'high',
+          TTL: '86400'
         },
         notification: {
           title: title || 'Top Briefing News Update',
           body: cleanDescription || 'Read the latest story on Top Briefing.',
-          icon: '/favicon.ico',
-          ...(image ? { image: image } : {}),
-          badge: '/favicon.ico'
+          icon: logoUrl,
+          badge: logoUrl,
+          image: cleanImage,
+          requireInteraction: true,
+          vibrate: [200, 100, 200]
         },
         fcmOptions: {
           link: articleUrl
