@@ -3,12 +3,13 @@ const {model, Schema} = require('mongoose');
 const subscriberSchema = new Schema({
     email: {
         type: String,
-        default: null,
+        trim: true,
+        lowercase: true,
         index: { unique: true, sparse: true }
     },
     fcmToken: {
         type: String,
-        default: null,
+        trim: true,
         index: { unique: true, sparse: true }
     },
     deviceInfo: {
@@ -22,3 +23,4 @@ const subscriberSchema = new Schema({
 }, {timestamps: true});
 
 module.exports = model('Subscriber', subscriberSchema);
+

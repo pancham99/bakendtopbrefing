@@ -88,14 +88,7 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
           }
         },
         android: {
-          priority: 'high',
-          notification: {
-            title: notificationTitle,
-            body: notificationBody,
-            imageUrl: cleanImage,
-            sound: 'default',
-            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
-          }
+          priority: 'high'
         },
         apns: {
           payload: {
