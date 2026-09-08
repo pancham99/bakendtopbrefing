@@ -15,7 +15,7 @@ const { sendNewsPushNotification } = require('../utils/pushNotification');
 class newsController {
 
     add_news = async (req, res) => {
-        const { id, category, name } = req.userInfo;
+        const { id, category, name, role } = req.userInfo;
         const form = formidable({});
         cloudinary.config({
             cloud_name: process.env.CLODINARY_CLOUD_NAME,
@@ -35,19 +35,10 @@ class newsController {
                 }
             );
 
-            // If state exists then category null
-            // (replaced below with correct finalCategory logic)
-
-            // =========================
-            // SEO Friendly Slug
-            // =========================
-
             const cleanTitle = title[0].trim();
-            // ── Devanagari → ASCII slug ──────────────────────────────
-            // Use slug from frontend if provided, otherwise generate from title
-
-            // If state exists then category null, otherwise use writer's category
             const finalCategory = state?.[0]?.trim() ? null : category;
+            // Admin role or explicit status 'active' publishes immediately
+            const initialStatus = (role === 'admin' || fields.status?.[0]?.trim() === 'active') ? 'active' : 'pending';
 
             // =========================
             // Save News
@@ -65,6 +56,7 @@ class newsController {
                 image: url,
                 date: new Date(),
                 writerName: name,
+                status: initialStatus,
                 count: 0
             });
 
@@ -86,7 +78,7 @@ class newsController {
                 </p>
 
                 <a
-                    href="https://www.topbriefing.in/news/${slug}"
+                    href="https://www.topbriefing.in/news/${news.slug}"
                     style="
                         display:inline-block;
                         margin-top:10px;
@@ -122,15 +114,17 @@ class newsController {
             }
 
             // =========================
-            // Send FCM Push Notification
+            // Send FCM Push Notification (Only if news is active)
             // =========================
-            sendNewsPushNotification({
-                title: cleanTitle,
-                description: shortDescription?.[0]?.trim() || description?.[0]?.trim() || '',
-                slug: news.slug,
-                image: url,
-                newsId: news._id
-            }).catch(err => console.error("Error triggering push notification in add_news:", err));
+            if (news.status === 'active') {
+                sendNewsPushNotification({
+                    title: cleanTitle,
+                    description: shortDescription?.[0]?.trim() || description?.[0]?.trim() || '',
+                    slug: news.slug,
+                    image: url,
+                    newsId: news._id
+                }).catch(err => console.error("Error triggering push notification in add_news:", err));
+            }
 
             return res.status(201).json({
                 message: "News added successfully and notifications sent.",
@@ -155,6 +149,12 @@ class newsController {
                 return res.status(404).json({ message: 'News article not found' });
             }
 
+            // Ensure article is active when manually broadcasting
+            if (news.status !== 'active') {
+                news.status = 'active';
+                await news.save();
+            }
+
             const pushResult = await sendNewsPushNotification({
                 title: news.title,
                 description: news.shortDescription || news.description,
@@ -164,10 +164,14 @@ class newsController {
             });
 
             if (pushResult.success) {
+                const messageText = (pushResult.sentCount > 0)
+                    ? `Push notification broadcasted to ${pushResult.sentCount} subscriber(s).`
+                    : (pushResult.message || `Push broadcast processed. (${pushResult.totalTokens || 0} FCM subscriber(s) registered)`);
                 return res.status(200).json({
-                    message: `Push notification sent to ${pushResult.sentCount || 0} subscriber(s).`,
+                    message: messageText,
                     sentCount: pushResult.sentCount,
-                    failedCount: pushResult.failedCount
+                    failedCount: pushResult.failedCount,
+                    totalTokens: pushResult.totalTokens
                 });
             } else {
                 return res.status(500).json({
@@ -355,17 +359,35 @@ class newsController {
     }
 
     update_news_status = async (req, res) => {
-        const { role } = req.userInfo
-        const { news_id } = req.params
-        const { status } = req.body
+        const { role } = req.userInfo;
+        const { news_id } = req.params;
+        const { status } = req.body;
 
         if (role === 'admin') {
-            const news = await newsModel.findByIdAndUpdate(news_id, { status }, { new: true })
-            return res.status(200).json({ message: 'news status update successfully', news })
-        } else {
-            return res.status(401).json({ message: 'you cannot access this api server error' })
-        }
+            const existingNews = await newsModel.findById(news_id);
+            if (!existingNews) {
+                return res.status(404).json({ message: 'News article not found' });
+            }
 
+            const previousStatus = existingNews.status;
+            existingNews.status = status;
+            await existingNews.save();
+
+            // Trigger FCM push notification when news status becomes active (published)
+            if (status === 'active' && previousStatus !== 'active') {
+                sendNewsPushNotification({
+                    title: existingNews.title,
+                    description: existingNews.shortDescription || existingNews.description,
+                    slug: existingNews.slug,
+                    image: existingNews.image,
+                    newsId: existingNews._id
+                }).catch(err => console.error("Error triggering push notification on status update:", err));
+            }
+
+            return res.status(200).json({ message: 'news status update successfully', news: existingNews });
+        } else {
+            return res.status(401).json({ message: 'you cannot access this api server error' });
+        }
     }
 
 
