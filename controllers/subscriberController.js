@@ -1,25 +1,33 @@
 const subscriberModel = require('../models/subscriberModel');
 
-
+// Helper to remove explicit null fields from legacy DB records so sparse indexes function properly
+const cleanupLegacyNulls = async () => {
+    try {
+        await subscriberModel.updateMany({ fcmToken: null }, { $unset: { fcmToken: 1 } });
+        await subscriberModel.updateMany({ email: null }, { $unset: { email: 1 } });
+    } catch (e) {
+        console.warn('Subscriber legacy null cleanup notice:', e.message);
+    }
+};
 
 class subscribeController {
     add_subscriber = async (req, res) => {
         try {
-            const email = req.body.email?.trim()?.toLowerCase() || null;
-            const fcmToken = req.body.fcmToken?.trim() || null;
-            const deviceInfo = req.body.deviceInfo || null;
+            await cleanupLegacyNulls();
+            const email = req.body.email?.trim()?.toLowerCase() || undefined;
+            const fcmToken = req.body.fcmToken?.trim() || undefined;
+            const deviceInfo = req.body.deviceInfo || undefined;
 
             if (!email && !fcmToken) {
                 return res.status(400).json({ message: 'Email or Push Notification token is required' });
             }
 
-            // Check if already subscribed by email or fcmToken
+            // Check existing by fcmToken if token provided, else by email
             let existing = null;
-            if (email) {
-                existing = await subscriberModel.findOne({ email });
-            }
-            if (!existing && fcmToken) {
+            if (fcmToken) {
                 existing = await subscriberModel.findOne({ fcmToken });
+            } else if (email) {
+                existing = await subscriberModel.findOne({ email });
             }
 
             if (existing) {
@@ -40,7 +48,7 @@ class subscribeController {
                 return res.status(200).json({ message: 'You are already subscribed!', subscriber: existing });
             }
 
-            // Create new subscriber record
+            // Create new subscriber record (only include non-undefined fields)
             const subscriber = await subscriberModel.create({
                 ...(email ? { email } : {}),
                 ...(fcmToken ? { fcmToken } : {}),
@@ -62,30 +70,49 @@ class subscribeController {
 
     save_fcm_token = async (req, res) => {
         try {
+            await cleanupLegacyNulls();
             const { fcmToken, email, deviceInfo } = req.body;
-            if (!fcmToken) {
+            if (!fcmToken || typeof fcmToken !== 'string' || !fcmToken.trim()) {
                 return res.status(400).json({ message: 'FCM Token is required' });
             }
 
-            const cleanEmail = email?.trim()?.toLowerCase() || null;
             const cleanToken = fcmToken.trim();
+            const cleanEmail = (email && typeof email === 'string') ? email.trim().toLowerCase() : undefined;
 
+            // 1. Check if record already exists for this FCM token (same device)
             let subscriber = await subscriberModel.findOne({ fcmToken: cleanToken });
-            if (!subscriber && cleanEmail) {
-                subscriber = await subscriberModel.findOne({ email: cleanEmail });
-            }
 
             if (subscriber) {
-                subscriber.fcmToken = cleanToken;
-                if (cleanEmail) subscriber.email = cleanEmail;
-                if (deviceInfo) subscriber.deviceInfo = deviceInfo;
-                await subscriber.save();
+                let updated = false;
+                if (cleanEmail && subscriber.email !== cleanEmail) {
+                    subscriber.email = cleanEmail;
+                    updated = true;
+                }
+                if (deviceInfo) {
+                    subscriber.deviceInfo = deviceInfo;
+                    updated = true;
+                }
+                if (updated) await subscriber.save();
             } else {
-                subscriber = await subscriberModel.create({
-                    fcmToken: cleanToken,
-                    ...(cleanEmail ? { email: cleanEmail } : {}),
-                    ...(deviceInfo ? { deviceInfo } : {})
-                });
+                // 2. Check if an email-only subscriber exists (no FCM token assigned yet)
+                if (cleanEmail) {
+                    const emailOnlySub = await subscriberModel.findOne({ email: cleanEmail, fcmToken: { $exists: false } });
+                    if (emailOnlySub) {
+                        subscriber = emailOnlySub;
+                        subscriber.fcmToken = cleanToken;
+                        if (deviceInfo) subscriber.deviceInfo = deviceInfo;
+                        await subscriber.save();
+                    }
+                }
+
+                // 3. If still no subscriber, create a dedicated record for this device's token
+                if (!subscriber) {
+                    subscriber = await subscriberModel.create({
+                        fcmToken: cleanToken,
+                        ...(cleanEmail ? { email: cleanEmail } : {}),
+                        ...(deviceInfo ? { deviceInfo } : {})
+                    });
+                }
             }
 
             return res.status(200).json({
@@ -132,4 +159,4 @@ class subscribeController {
     };
 }
 
-module.exports = new subscribeController();
+module.exports = new subscribeController();
