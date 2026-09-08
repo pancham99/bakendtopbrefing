@@ -35,72 +35,116 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
     const cleanDescription = (description || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 150);
     const cleanImage = image ? image.replace(/^http:\/\//i, 'https://') : 'https://topbriefing.in/logo.png';
     const logoUrl = 'https://topbriefing.in/logo.png';
+    const notificationTitle = title || 'Top Briefing News Update';
+    const notificationBody = cleanDescription || 'Read the latest story on Top Briefing.';
 
-    // FCM Multicast payload with full Android & WebPush compatibility
-    const messagePayload = {
-      tokens: tokens,
-      notification: {
-        title: title || 'Top Briefing News Update',
-        body: cleanDescription || 'Read the latest story on Top Briefing.',
-        imageUrl: cleanImage
-      },
-      data: {
-        newsId: String(newsId || ''),
-        slug: String(slug || ''),
-        url: articleUrl,
-        title: title || '',
-        image: cleanImage
-      },
-      webpush: {
-        headers: {
-          Urgency: 'high',
-          TTL: '86400'
-        },
+    console.log(`[FCM] Preparing push notification for ${tokens.length} subscriber(s)...`);
+
+    // Chunk tokens into batches of 500 (FCM Multicast limit)
+    const CHUNK_SIZE = 500;
+    let totalSuccessCount = 0;
+    let totalFailureCount = 0;
+    const invalidTokens = [];
+
+    for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+      const tokenBatch = tokens.slice(i, i + CHUNK_SIZE);
+
+      const messagePayload = {
+        tokens: tokenBatch,
         notification: {
-          title: title || 'Top Briefing News Update',
-          body: cleanDescription || 'Read the latest story on Top Briefing.',
-          icon: logoUrl,
-          badge: logoUrl,
-          image: cleanImage,
-          requireInteraction: true,
-          vibrate: [200, 100, 200]
+          title: notificationTitle,
+          body: notificationBody,
+          imageUrl: cleanImage
         },
-        fcmOptions: {
-          link: articleUrl
-        }
-      }
-    };
-
-    console.log(`[FCM] Sending push notification to ${tokens.length} subscriber(s)...`);
-    const response = await messaging.sendEachForMulticast(messagePayload);
-
-    console.log(`[FCM] Sent successfully: ${response.successCount}, Failures: ${response.failureCount}`);
-
-    // Clean up invalid / unregistered tokens from DB
-    if (response.failureCount > 0) {
-      const invalidTokens = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          const errCode = resp.error?.code;
-          if (
-            errCode === 'messaging/invalid-registration-token' ||
-            errCode === 'messaging/registration-token-not-registered'
-          ) {
-            invalidTokens.push(tokens[idx]);
+        data: {
+          newsId: String(newsId || ''),
+          slug: String(slug || ''),
+          url: articleUrl,
+          title: notificationTitle,
+          image: cleanImage,
+          body: notificationBody
+        },
+        webpush: {
+          headers: {
+            Urgency: 'high',
+            TTL: '86400'
+          },
+          notification: {
+            title: notificationTitle,
+            body: notificationBody,
+            icon: logoUrl,
+            badge: logoUrl,
+            image: cleanImage,
+            requireInteraction: true,
+            vibrate: [200, 100, 200],
+            data: {
+              url: articleUrl,
+              newsId: String(newsId || ''),
+              slug: String(slug || '')
+            }
+          },
+          fcmOptions: {
+            link: articleUrl
+          }
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            title: notificationTitle,
+            body: notificationBody,
+            imageUrl: cleanImage,
+            sound: 'default',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+          }
+        },
+        apns: {
+          payload: {
+            aps: {
+              alert: {
+                title: notificationTitle,
+                body: notificationBody
+              },
+              sound: 'default',
+              'mutable-content': 1
+            }
+          },
+          fcmOptions: {
+            imageUrl: cleanImage
           }
         }
-      });
+      };
 
-      if (invalidTokens.length > 0) {
-        console.log(`[FCM] Cleaning up ${invalidTokens.length} stale FCM token(s)...`);
-        await subscriberModel.deleteMany({ fcmToken: { $in: invalidTokens } });
+      const response = await messaging.sendEachForMulticast(messagePayload);
+      totalSuccessCount += response.successCount;
+      totalFailureCount += response.failureCount;
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            const errCode = resp.error?.code;
+            if (
+              errCode === 'messaging/invalid-registration-token' ||
+              errCode === 'messaging/registration-token-not-registered'
+            ) {
+              invalidTokens.push(tokenBatch[idx]);
+            }
+          }
+        });
       }
+    }
+
+    console.log(`[FCM] Notification summary -> Sent successfully: ${totalSuccessCount}, Failures: ${totalFailureCount}`);
+
+    // Clean up invalid / unregistered tokens from DB
+    if (invalidTokens.length > 0) {
+      console.log(`[FCM] Pruning ${invalidTokens.length} expired/unregistered FCM token(s)...`);
+      await subscriberModel.deleteMany({ fcmToken: { $in: invalidTokens } });
     }
 
     return {
       success: true,
-      sentCount: response.successCount,
-      failedCount: response.failureCount,
+      sentCount: totalSuccessCount,
+      failedCount: totalFailureCount,
       totalTokens: tokens.length
     };
   } catch (error) {
@@ -112,3 +156,4 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
 module.exports = {
   sendNewsPushNotification
 };
+
