@@ -31,12 +31,17 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
       return { success: true, sentCount: 0, message: 'No valid FCM tokens found' };
     }
 
-    const articleUrl = targetUrl || (slug ? `https://topbriefing.in/news/${slug}` : 'https://topbriefing.in');
+    const articleUrl = targetUrl
+      ? targetUrl.replace('://topbriefing.in', '://www.topbriefing.in')
+      : (slug ? `https://www.topbriefing.in/news/${slug}` : 'https://www.topbriefing.in');
     const cleanDescription = (description || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 150);
-    const cleanImage = image ? image.replace(/^http:\/\//i, 'https://') : 'https://topbriefing.in/logo-square-badge.png';
-    const logoUrl = 'https://topbriefing.in/logo-square-badge.png';
+    const cleanImage = image
+      ? image.replace(/^http:\/\//i, 'https://').replace('://topbriefing.in', '://www.topbriefing.in')
+      : 'https://www.topbriefing.in/logo-square-badge.png';
+    const logoUrl = 'https://www.topbriefing.in/logo-square-badge.png';
     const notificationTitle = title || 'Top Briefing News Update';
     const notificationBody = cleanDescription || 'Read the latest story on Top Briefing.';
+    const notificationTag = newsId ? `news-${newsId}` : `topbriefing-${Date.now()}`;
 
     console.log(`[FCM] Preparing push notification for ${tokens.length} subscriber(s)...`);
 
@@ -76,6 +81,8 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
             icon: logoUrl,
             badge: logoUrl,
             image: cleanImage,
+            tag: notificationTag,
+            renotify: true,
             requireInteraction: true,
             vibrate: [200, 100, 200],
             data: {
@@ -92,7 +99,8 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
           priority: 'high',
           notification: {
             icon: logoUrl,
-            color: '#c92726'
+            color: '#c92726',
+            tag: notificationTag
           }
         },
         apns: {
