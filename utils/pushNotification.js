@@ -1,7 +1,16 @@
 const { getMessaging } = require('./firebaseAdmin');
 const subscriberModel = require('../models/subscriberModel');
 
-
+/**
+ * Send push notification to all FCM subscribers for a news article.
+ * @param {Object} payload
+ * @param {string} payload.title - News title
+ * @param {string} [payload.description] - Short description or snippet
+ * @param {string} [payload.slug] - Article slug
+ * @param {string} [payload.image] - Article image URL
+ * @param {string} [payload.newsId] - Article ID
+ * @param {string} [payload.targetUrl] - Full URL to article
+ */
 const sendNewsPushNotification = async ({ title, description = '', slug = '', image = '', newsId = '', targetUrl = '' }) => {
   try {
     const messaging = getMessaging();
@@ -25,16 +34,14 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
     const articleUrl = targetUrl
       ? targetUrl.replace('://topbriefing.in', '://www.topbriefing.in')
       : (slug ? `https://www.topbriefing.in/news/${slug}` : 'https://www.topbriefing.in');
-
     const cleanDescription = (description || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 150);
     const cleanImage = image
       ? image.replace(/^http:\/\//i, 'https://').replace('://topbriefing.in', '://www.topbriefing.in')
       : 'https://www.topbriefing.in/logo-square-badge.png';
-
     const logoUrl = 'https://www.topbriefing.in/logo-square-badge.png';
     const notificationTitle = title || 'Top Briefing News Update';
     const notificationBody = cleanDescription || 'Read the latest story on Top Briefing.';
-    const notificationTag = newsId ? `news-${newsId}` : 'topbriefing-news';
+    const notificationTag = newsId ? `news-${newsId}` : `topbriefing-${Date.now()}`;
 
     console.log(`[FCM] Preparing push notification for ${tokens.length} subscriber(s)...`);
 
