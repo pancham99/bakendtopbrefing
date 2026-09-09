@@ -33,8 +33,8 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
 
     const articleUrl = targetUrl || (slug ? `https://topbriefing.in/news/${slug}` : 'https://topbriefing.in');
     const cleanDescription = (description || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 150);
-    const cleanImage = image ? image.replace(/^http:\/\//i, 'https://') : 'https://topbriefing.in/logo.png';
-    const logoUrl = 'https://topbriefing.in/logo.png';
+    const cleanImage = image ? image.replace(/^http:\/\//i, 'https://') : 'https://topbriefing.in/logo-square-badge.png';
+    const logoUrl = 'https://topbriefing.in/logo-square-badge.png';
     const notificationTitle = title || 'Top Briefing News Update';
     const notificationBody = cleanDescription || 'Read the latest story on Top Briefing.';
 
@@ -62,7 +62,8 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
           url: articleUrl,
           title: notificationTitle,
           image: cleanImage,
-          body: notificationBody
+          body: notificationBody,
+          icon: logoUrl
         },
         webpush: {
           headers: {
@@ -88,7 +89,11 @@ const sendNewsPushNotification = async ({ title, description = '', slug = '', im
           }
         },
         android: {
-          priority: 'high'
+          priority: 'high',
+          notification: {
+            icon: logoUrl,
+            color: '#c92726'
+          }
         },
         apns: {
           payload: {
