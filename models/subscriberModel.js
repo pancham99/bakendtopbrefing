@@ -14,8 +14,19 @@ const subscriberSchema = new Schema({
     },
     deviceInfo: {
         userAgent: String,
-        platform: String
+        platform: String,
+        isMobile: Boolean,
+        deviceName: String,
+        os: String,
+        browser: String,
+        screen: String,
+        language: String
     },
+    ip: String,
+    city: String,
+    region: String,
+    country: String,
+    location: String,
     subscribedAt: {
         type: Date,
         default: Date.now
