@@ -10,6 +10,47 @@ const cleanupLegacyNulls = async () => {
     }
 };
 
+// Helper to extract client IP and Location using Vercel Geo headers or GeoIP fallback
+const extractClientGeoAndIp = async (req) => {
+    let rawIp = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '')
+        .toString().split(',')[0].trim();
+
+    if (rawIp === '::1' || rawIp === '127.0.0.1' || rawIp.startsWith('::ffff:127.0.0.1')) {
+        rawIp = '127.0.0.1';
+    }
+
+    let city = req.headers['x-vercel-ip-city'] ? decodeURIComponent(req.headers['x-vercel-ip-city']) : undefined;
+    let region = req.headers['x-vercel-ip-country-region'] || undefined;
+    let country = req.headers['x-vercel-ip-country'] || undefined;
+
+    if (!city && rawIp && rawIp !== '127.0.0.1' && !rawIp.startsWith('192.168.') && !rawIp.startsWith('10.')) {
+        try {
+            const fetchRes = await fetch(`http://ip-api.com/json/${rawIp}?fields=status,country,regionName,city`);
+            if (fetchRes.ok) {
+                const geoData = await fetchRes.json();
+                if (geoData.status === 'success') {
+                    city = geoData.city;
+                    region = geoData.regionName;
+                    country = geoData.country;
+                }
+            }
+        } catch (e) {
+            console.warn('GeoIP fetch notice:', e.message);
+        }
+    }
+
+    const locationParts = [city, region, country].filter(Boolean);
+    const locationStr = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+    return {
+        ip: rawIp,
+        city,
+        region,
+        country,
+        location: locationStr
+    };
+};
+
 class subscribeController {
     add_subscriber = async (req, res) => {
         try {
@@ -21,6 +62,8 @@ class subscribeController {
             if (!email && !fcmToken) {
                 return res.status(400).json({ message: 'Email or Push Notification token is required' });
             }
+
+            const clientInfo = await extractClientGeoAndIp(req);
 
             // Check existing by fcmToken if token provided, else by email
             let existing = null;
@@ -44,15 +87,28 @@ class subscribeController {
                     existing.deviceInfo = deviceInfo;
                     updated = true;
                 }
+                if (clientInfo.ip && existing.ip !== clientInfo.ip) {
+                    existing.ip = clientInfo.ip;
+                    existing.city = clientInfo.city;
+                    existing.region = clientInfo.region;
+                    existing.country = clientInfo.country;
+                    existing.location = clientInfo.location;
+                    updated = true;
+                }
                 if (updated) await existing.save();
                 return res.status(200).json({ message: 'You are already subscribed!', subscriber: existing });
             }
 
-            // Create new subscriber record (only include non-undefined fields)
+            // Create new subscriber record
             const subscriber = await subscriberModel.create({
                 ...(email ? { email } : {}),
                 ...(fcmToken ? { fcmToken } : {}),
-                ...(deviceInfo ? { deviceInfo } : {})
+                ...(deviceInfo ? { deviceInfo } : {}),
+                ip: clientInfo.ip,
+                city: clientInfo.city,
+                region: clientInfo.region,
+                country: clientInfo.country,
+                location: clientInfo.location
             });
 
             return res.status(201).json({
@@ -78,6 +134,7 @@ class subscribeController {
 
             const cleanToken = fcmToken.trim();
             const cleanEmail = (email && typeof email === 'string') ? email.trim().toLowerCase() : undefined;
+            const clientInfo = await extractClientGeoAndIp(req);
 
             // 1. Check if record already exists for this FCM token (same device)
             let subscriber = await subscriberModel.findOne({ fcmToken: cleanToken });
@@ -92,25 +149,43 @@ class subscribeController {
                     subscriber.deviceInfo = deviceInfo;
                     updated = true;
                 }
+                if (clientInfo.ip && subscriber.ip !== clientInfo.ip) {
+                    subscriber.ip = clientInfo.ip;
+                    subscriber.city = clientInfo.city;
+                    subscriber.region = clientInfo.region;
+                    subscriber.country = clientInfo.country;
+                    subscriber.location = clientInfo.location;
+                    updated = true;
+                }
                 if (updated) await subscriber.save();
             } else {
-                // 2. Check if an email-only subscriber exists (no FCM token assigned yet)
+                // 2. Check if an email-only subscriber exists
                 if (cleanEmail) {
                     const emailOnlySub = await subscriberModel.findOne({ email: cleanEmail, fcmToken: { $exists: false } });
                     if (emailOnlySub) {
                         subscriber = emailOnlySub;
                         subscriber.fcmToken = cleanToken;
                         if (deviceInfo) subscriber.deviceInfo = deviceInfo;
+                        subscriber.ip = clientInfo.ip;
+                        subscriber.city = clientInfo.city;
+                        subscriber.region = clientInfo.region;
+                        subscriber.country = clientInfo.country;
+                        subscriber.location = clientInfo.location;
                         await subscriber.save();
                     }
                 }
 
-                // 3. If still no subscriber, create a dedicated record for this device's token
+                // 3. Create dedicated record for this token
                 if (!subscriber) {
                     subscriber = await subscriberModel.create({
                         fcmToken: cleanToken,
                         ...(cleanEmail ? { email: cleanEmail } : {}),
-                        ...(deviceInfo ? { deviceInfo } : {})
+                        ...(deviceInfo ? { deviceInfo } : {}),
+                        ip: clientInfo.ip,
+                        city: clientInfo.city,
+                        region: clientInfo.region,
+                        country: clientInfo.country,
+                        location: clientInfo.location
                     });
                 }
             }
@@ -130,7 +205,7 @@ class subscribeController {
 
     get_all_subscribers = async (req, res) => {
         try {
-            const subscribers = await subscriberModel.find({}, 'email fcmToken deviceInfo createdAt').sort({ createdAt: -1 });
+            const subscribers = await subscriberModel.find({}, 'email fcmToken deviceInfo ip city region country location createdAt').sort({ createdAt: -1 });
             const pushSubscriberCount = subscribers.filter(s => !!s.fcmToken).length;
             const emailSubscriberCount = subscribers.filter(s => !!s.email).length;
 
