@@ -29,6 +29,20 @@ const analyticsSchema = new Schema({
     screenWidth: Number,
     screenHeight: Number,
 
+    deviceId: {
+        type: String,
+        index: true
+    },
+    deviceName: String,
+    visitCount: {
+        type: Number,
+        default: 1
+    },
+    lastVisitedAt: {
+        type: Date,
+        default: Date.now
+    },
+
     referer: String,
 
 }, {
