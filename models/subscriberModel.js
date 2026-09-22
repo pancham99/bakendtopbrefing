@@ -27,6 +27,9 @@ const subscriberSchema = new Schema({
     region: String,
     country: String,
     location: String,
+    formatAddress: String,
+    latitude: Number,
+    longitude: Number,
     subscribedAt: {
         type: Date,
         default: Date.now

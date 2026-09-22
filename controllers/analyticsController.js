@@ -13,6 +13,7 @@ class AnalyticsController {
             const {
                 latitude,
                 longitude,
+                formatAddress,
                 timezone,
                 language,
                 screenWidth,
@@ -44,10 +45,10 @@ class AnalyticsController {
             let country = geo?.country || "";
             let region = geo?.region || "";
             let city = geo?.city || "";
-            let address = "";
+            let address = formatAddress || "";
 
-            // Reverse Geocoding
-            if (latitude && longitude) {
+            // Reverse Geocoding fallback if formatAddress not provided
+            if (latitude && longitude && !formatAddress) {
 
                 try {
 
@@ -89,6 +90,8 @@ class AnalyticsController {
 
             }
 
+            const formattedAddr = formatAddress || address || "";
+
             const analytics = await ClickAnalytics.create({
 
                 ip,
@@ -108,7 +111,8 @@ class AnalyticsController {
                 country,
                 region,
                 city,
-                address,
+                address: formattedAddr,
+                formatAddress: formattedAddr,
 
                 timezone,
 
@@ -138,6 +142,26 @@ class AnalyticsController {
 
         }
 
+    };
+
+    getAnalytics = async (req, res) => {
+        try {
+            const analytics = await ClickAnalytics.find()
+                .sort({ createdAt: -1 })
+                .limit(100);
+
+            return res.status(200).json({
+                success: true,
+                count: analytics.length,
+                analytics
+            });
+        } catch (error) {
+            console.error("Error fetching analytics:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal Server Error"
+            });
+        }
     };
 
 }
