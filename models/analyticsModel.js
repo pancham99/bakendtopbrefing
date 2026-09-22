@@ -20,6 +20,7 @@ const analyticsSchema = new Schema({
     region: String,
     city: String,
     address: String,
+    formatAddress: String,
 
     timezone: String,
 

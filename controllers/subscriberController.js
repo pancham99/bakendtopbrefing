@@ -58,6 +58,9 @@ class subscribeController {
             const email = req.body.email?.trim()?.toLowerCase() || undefined;
             const fcmToken = req.body.fcmToken?.trim() || undefined;
             const deviceInfo = req.body.deviceInfo || undefined;
+            const formatAddress = req.body.formatAddress || req.body.location?.formatAddress || undefined;
+            const latitude = req.body.latitude || req.body.location?.latitude || undefined;
+            const longitude = req.body.longitude || req.body.location?.longitude || undefined;
 
             if (!email && !fcmToken) {
                 return res.status(400).json({ message: 'Email or Push Notification token is required' });
@@ -87,6 +90,18 @@ class subscribeController {
                     existing.deviceInfo = deviceInfo;
                     updated = true;
                 }
+                if (formatAddress && existing.formatAddress !== formatAddress) {
+                    existing.formatAddress = formatAddress;
+                    updated = true;
+                }
+                if (latitude && existing.latitude !== latitude) {
+                    existing.latitude = latitude;
+                    updated = true;
+                }
+                if (longitude && existing.longitude !== longitude) {
+                    existing.longitude = longitude;
+                    updated = true;
+                }
                 if (clientInfo.ip && existing.ip !== clientInfo.ip) {
                     existing.ip = clientInfo.ip;
                     existing.city = clientInfo.city;
@@ -104,6 +119,9 @@ class subscribeController {
                 ...(email ? { email } : {}),
                 ...(fcmToken ? { fcmToken } : {}),
                 ...(deviceInfo ? { deviceInfo } : {}),
+                ...(formatAddress ? { formatAddress } : {}),
+                ...(latitude ? { latitude } : {}),
+                ...(longitude ? { longitude } : {}),
                 ip: clientInfo.ip,
                 city: clientInfo.city,
                 region: clientInfo.region,
@@ -127,13 +145,16 @@ class subscribeController {
     save_fcm_token = async (req, res) => {
         try {
             await cleanupLegacyNulls();
-            const { fcmToken, email, deviceInfo } = req.body;
+            const { fcmToken, email, deviceInfo, formatAddress, latitude, longitude, location } = req.body;
             if (!fcmToken || typeof fcmToken !== 'string' || !fcmToken.trim()) {
                 return res.status(400).json({ message: 'FCM Token is required' });
             }
 
             const cleanToken = fcmToken.trim();
             const cleanEmail = (email && typeof email === 'string') ? email.trim().toLowerCase() : undefined;
+            const cleanFormatAddress = formatAddress || location?.formatAddress || undefined;
+            const cleanLat = latitude || location?.latitude || undefined;
+            const cleanLon = longitude || location?.longitude || undefined;
             const clientInfo = await extractClientGeoAndIp(req);
 
             // 1. Check if record already exists for this FCM token (same device)
@@ -147,6 +168,18 @@ class subscribeController {
                 }
                 if (deviceInfo) {
                     subscriber.deviceInfo = deviceInfo;
+                    updated = true;
+                }
+                if (cleanFormatAddress && subscriber.formatAddress !== cleanFormatAddress) {
+                    subscriber.formatAddress = cleanFormatAddress;
+                    updated = true;
+                }
+                if (cleanLat && subscriber.latitude !== cleanLat) {
+                    subscriber.latitude = cleanLat;
+                    updated = true;
+                }
+                if (cleanLon && subscriber.longitude !== cleanLon) {
+                    subscriber.longitude = cleanLon;
                     updated = true;
                 }
                 if (clientInfo.ip && subscriber.ip !== clientInfo.ip) {
@@ -166,6 +199,9 @@ class subscribeController {
                         subscriber = emailOnlySub;
                         subscriber.fcmToken = cleanToken;
                         if (deviceInfo) subscriber.deviceInfo = deviceInfo;
+                        if (cleanFormatAddress) subscriber.formatAddress = cleanFormatAddress;
+                        if (cleanLat) subscriber.latitude = cleanLat;
+                        if (cleanLon) subscriber.longitude = cleanLon;
                         subscriber.ip = clientInfo.ip;
                         subscriber.city = clientInfo.city;
                         subscriber.region = clientInfo.region;
@@ -181,6 +217,9 @@ class subscribeController {
                         fcmToken: cleanToken,
                         ...(cleanEmail ? { email: cleanEmail } : {}),
                         ...(deviceInfo ? { deviceInfo } : {}),
+                        ...(cleanFormatAddress ? { formatAddress: cleanFormatAddress } : {}),
+                        ...(cleanLat ? { latitude: cleanLat } : {}),
+                        ...(cleanLon ? { longitude: cleanLon } : {}),
                         ip: clientInfo.ip,
                         city: clientInfo.city,
                         region: clientInfo.region,
@@ -205,7 +244,7 @@ class subscribeController {
 
     get_all_subscribers = async (req, res) => {
         try {
-            const subscribers = await subscriberModel.find({}, 'email fcmToken deviceInfo ip city region country location createdAt').sort({ createdAt: -1 });
+            const subscribers = await subscriberModel.find({}, 'email fcmToken deviceInfo ip city region country location formatAddress latitude longitude createdAt').sort({ createdAt: -1 });
             const pushSubscriberCount = subscribers.filter(s => !!s.fcmToken).length;
             const emailSubscriberCount = subscribers.filter(s => !!s.email).length;
 
