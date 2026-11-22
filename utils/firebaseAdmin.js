@@ -3,9 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const { initializeApp, getApps, getApp, cert } = require("firebase-admin/app");
 const { getMessaging: getAdminMessaging } = require("firebase-admin/messaging");
-
 let firebaseApp = null;
-
 const getFirebaseApp = () => {
   if (firebaseApp) {
     return firebaseApp;
