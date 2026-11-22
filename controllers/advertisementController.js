@@ -354,17 +354,6 @@ class advertisementController {
             return res.status(500).json({ message: 'Internal server error' });
         }
     };
-
-
-
-
-
-
-
-
-
-
-
 }
 
 module.exports = new advertisementController();
